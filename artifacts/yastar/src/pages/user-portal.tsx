@@ -30,7 +30,7 @@ export default function UserPortalPage() {
   return (
     <div className="min-h-[100dvh] bg-background" data-testid="page-user-portal">
       <header className="border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-full mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src={`${basePath}/logo.svg`} alt="Yastar" className="h-8 w-8 rounded-lg" />
             <span className="font-bold tracking-tight">Yastar</span>
@@ -58,7 +58,7 @@ export default function UserPortalPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-full mx-auto px-4 py-8">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="calculator" data-testid="tab-calculator">
