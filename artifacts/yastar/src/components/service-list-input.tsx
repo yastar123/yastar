@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import type { ServiceItem } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/currency-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -55,11 +56,9 @@ export function ServiceListInput({ services, onChange }: ServiceListInputProps) 
             </div>
             <div className="flex flex-col gap-1 w-32">
               <Label className="text-xs text-muted-foreground">Harga (Rp)</Label>
-              <Input
-                type="number"
-                min={0}
+              <CurrencyInput
                 value={service.price}
-                onChange={(e) => update(index, { price: Number(e.target.value) })}
+                onValueChange={(v) => update(index, { price: v })}
                 data-testid={`input-service-price-${index}`}
               />
             </div>

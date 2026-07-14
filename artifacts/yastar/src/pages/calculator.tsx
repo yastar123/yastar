@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { CurrencyInput } from '@/components/currency-input';
 import { ServiceListInput } from '@/components/service-list-input';
 import { CommissionConfigInput } from '@/components/commission-config-input';
 import { InsightList } from '@/components/insight-list';
@@ -175,21 +176,17 @@ export default function CalculatorPage({ canSave, onScenarioSaved }: CalculatorP
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Biaya Tetap / Bulan (Rp)</Label>
-              <Input
-                type="number"
-                min={0}
+              <CurrencyInput
                 value={input.fixedCosts}
-                onChange={(e) => patch({ fixedCosts: Number(e.target.value) })}
+                onValueChange={(v) => patch({ fixedCosts: v })}
                 data-testid="input-fixed-costs"
               />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Target Laba / Bulan (Rp)</Label>
-              <Input
-                type="number"
-                min={0}
+              <CurrencyInput
                 value={input.targetProfit}
-                onChange={(e) => patch({ targetProfit: Number(e.target.value) })}
+                onValueChange={(v) => patch({ targetProfit: v })}
                 data-testid="input-target-profit"
               />
             </div>
