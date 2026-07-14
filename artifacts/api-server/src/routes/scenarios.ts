@@ -19,7 +19,7 @@ import { calculateReverseTarget } from "../lib/calculationEngine";
 
 const router: IRouter = Router();
 
-router.use(requireAuth);
+router.use("/scenarios", requireAuth);
 
 router.get("/scenarios", async (req, res): Promise<void> => {
   const { userId } = getAuth(req);
