@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Yastar API - reverse business-decision calculator for salons/barbershops
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: calculate
+    description: Reverse-calculation engine (not persisted)
+  - name: account
+    description: Current owner account/tier info
+  - name: scenarios
+    description: Saved scenarios
+  - name: admin
+    description: Internal admin dashboard
 paths:
   /healthz:
     get:
@@ -24,6 +32,381 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /calculate/reverse-target:
+    post:
+      operationId: calculateReverseTarget
+      tags: [calculate]
+      summary: Reverse-calculate clients needed to hit a target profit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReverseTargetInput"
+      responses:
+        "200":
+          description: Calculated result with feasibility check and insights
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReverseTargetResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /calculate/break-even:
+    post:
+      operationId: calculateBreakEven
+      tags: [calculate]
+      summary: Calculate how long/how many clients a new hire needs to break even
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BreakEvenInput"
+      responses:
+        "200":
+          description: Break-even projection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BreakEvenResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /me:
+    get:
+      operationId: getMyAccount
+      tags: [account]
+      summary: Get the current owner's account, tier and usage
+      responses:
+        "200":
+          description: Account summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /scenarios:
+    get:
+      operationId: listScenarios
+      tags: [scenarios]
+      summary: List the current owner's saved scenarios
+      responses:
+        "200":
+          description: List of scenarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Scenario"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createScenario
+      tags: [scenarios]
+      summary: Save a new scenario (subject to tier scenario limit)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Scenario limit reached for current tier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /scenarios/{id}:
+    get:
+      operationId: getScenario
+      tags: [scenarios]
+      summary: Get a single saved scenario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateScenario
+      tags: [scenarios]
+      summary: Update/rename a saved scenario, recomputes result snapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioUpdate"
+      responses:
+        "200":
+          description: Updated scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteScenario
+      tags: [scenarios]
+      summary: Delete a saved scenario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/login:
+    post:
+      operationId: loginAdmin
+      tags: [admin]
+      summary: Log into the internal admin dashboard with the shared admin password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Invalid password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/logout:
+    post:
+      operationId: logoutAdmin
+      tags: [admin]
+      summary: Log out of the admin dashboard
+      responses:
+        "204":
+          description: Logged out
+
+  /admin/session:
+    get:
+      operationId: getAdminSession
+      tags: [admin]
+      summary: Check if the current admin session is valid
+      responses:
+        "200":
+          description: Admin session status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Not authenticated as admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/accounts:
+    get:
+      operationId: listAdminAccounts
+      tags: [admin]
+      summary: Search owner accounts by email (admin only)
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminAccountSummary"
+        "401":
+          description: Not authenticated as admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/accounts/{id}:
+    get:
+      operationId: getAdminAccount
+      tags: [admin]
+      summary: Get an owner account with its change history (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Account detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAccountDetail"
+        "401":
+          description: Not authenticated as admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateAdminAccount
+      tags: [admin]
+      summary: Set an owner's tier, scenario limit, export access and package expiry (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminAccountUpdate"
+      responses:
+        "200":
+          description: Updated account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAccountDetail"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated as admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +417,544 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    BusinessType:
+      type: string
+      enum: [barbershop, salon, nail, spa, custom]
+
+    CommissionModel:
+      type: string
+      enum: [flat, base_plus_commission, tiered]
+
+    Tier:
+      type: string
+      enum: [free, starter, professional]
+
+    InsightSeverity:
+      type: string
+      enum: [info, success, warning, danger]
+
+    ServiceItem:
+      type: object
+      required: [name, price, durationMinutes]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          minimum: 0
+        durationMinutes:
+          type: integer
+          minimum: 1
+
+    CommissionTier:
+      type: object
+      required: [minClients, percent]
+      properties:
+        minClients:
+          type: integer
+          minimum: 0
+        percent:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    CommissionConfig:
+      type: object
+      description: >
+        Fields are interpreted based on the sibling commissionModel value.
+        flat -> flatPercent. base_plus_commission -> baseSalary + baseCommissionPercent.
+        tiered -> tiers.
+      properties:
+        flatPercent:
+          type: ["number", "null"]
+          minimum: 0
+          maximum: 100
+        baseSalary:
+          type: ["number", "null"]
+          minimum: 0
+        baseCommissionPercent:
+          type: ["number", "null"]
+          minimum: 0
+          maximum: 100
+        tiers:
+          type: ["array", "null"]
+          items:
+            $ref: "#/components/schemas/CommissionTier"
+
+    Insight:
+      type: object
+      required: [severity, code, message]
+      properties:
+        severity:
+          $ref: "#/components/schemas/InsightSeverity"
+        code:
+          type: string
+        message:
+          type: string
+
+    ReverseTargetInput:
+      type: object
+      required:
+        - businessType
+        - employeeCount
+        - workingDaysPerMonth
+        - workingHoursPerDay
+        - fixedCosts
+        - targetProfit
+        - commissionModel
+        - commissionConfig
+        - services
+      properties:
+        businessType:
+          $ref: "#/components/schemas/BusinessType"
+        employeeCount:
+          type: integer
+          minimum: 1
+        workingDaysPerMonth:
+          type: integer
+          minimum: 1
+          maximum: 31
+        workingHoursPerDay:
+          type: number
+          minimum: 1
+          maximum: 24
+        fixedCosts:
+          type: number
+          minimum: 0
+        targetProfit:
+          type: number
+          minimum: 0
+        commissionModel:
+          $ref: "#/components/schemas/CommissionModel"
+        commissionConfig:
+          $ref: "#/components/schemas/CommissionConfig"
+        services:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ServiceItem"
+
+    ReverseTargetResult:
+      type: object
+      required:
+        - avgServicePrice
+        - avgServiceDurationMinutes
+        - effectiveCommissionPercent
+        - netProfitPerClient
+        - totalCostsMonthly
+        - clientsNeededTotal
+        - clientsNeededPerEmployee
+        - clientsNeededPerDayPerEmployee
+        - maxCapacityPerEmployeePerMonth
+        - maxCapacityTotalPerMonth
+        - utilizationPercent
+        - marginPercent
+        - isRealistic
+        - insights
+      properties:
+        avgServicePrice:
+          type: number
+        avgServiceDurationMinutes:
+          type: number
+        effectiveCommissionPercent:
+          type: number
+        netProfitPerClient:
+          type: number
+        totalCostsMonthly:
+          type: number
+        clientsNeededTotal:
+          type: number
+        clientsNeededPerEmployee:
+          type: number
+        clientsNeededPerDayPerEmployee:
+          type: number
+        maxCapacityPerEmployeePerMonth:
+          type: number
+        maxCapacityTotalPerMonth:
+          type: number
+        utilizationPercent:
+          type: number
+        marginPercent:
+          type: number
+        isRealistic:
+          type: boolean
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Insight"
+
+    BreakEvenInput:
+      type: object
+      required:
+        - avgServicePrice
+        - commissionModel
+        - commissionConfig
+        - monthlyOverheadShare
+        - estimatedClientsPerDay
+      properties:
+        avgServicePrice:
+          type: number
+          minimum: 0
+        commissionModel:
+          $ref: "#/components/schemas/CommissionModel"
+        commissionConfig:
+          $ref: "#/components/schemas/CommissionConfig"
+        monthlyOverheadShare:
+          type: number
+          minimum: 0
+        estimatedClientsPerDay:
+          type: number
+          minimum: 0.1
+
+    BreakEvenResult:
+      type: object
+      required:
+        - netProfitPerClient
+        - monthlyFixedCostOfHire
+        - breakEvenClientsNeeded
+        - breakEvenDays
+        - breakEvenWeeks
+        - breakEvenMonths
+        - insights
+      properties:
+        netProfitPerClient:
+          type: number
+        monthlyFixedCostOfHire:
+          type: number
+        breakEvenClientsNeeded:
+          type: number
+        breakEvenDays:
+          type: number
+        breakEvenWeeks:
+          type: number
+        breakEvenMonths:
+          type: number
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Insight"
+
+    Account:
+      type: object
+      required:
+        - id
+        - email
+        - businessName
+        - tier
+        - scenarioLimit
+        - scenarioCount
+        - exportEnabled
+        - benchmarkAccess
+        - packageStartedAt
+        - packageExpiresAt
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        businessName:
+          type: ["string", "null"]
+        tier:
+          $ref: "#/components/schemas/Tier"
+        scenarioLimit:
+          type: ["integer", "null"]
+          description: Null means unlimited
+        scenarioCount:
+          type: integer
+        exportEnabled:
+          type: boolean
+        benchmarkAccess:
+          type: boolean
+        packageStartedAt:
+          type: ["string", "null"]
+          format: date-time
+        packageExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+
+    Scenario:
+      type: object
+      required:
+        - id
+        - name
+        - businessType
+        - employeeCount
+        - workingDaysPerMonth
+        - workingHoursPerDay
+        - fixedCosts
+        - targetProfit
+        - commissionModel
+        - commissionConfig
+        - services
+        - resultSnapshot
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        businessType:
+          $ref: "#/components/schemas/BusinessType"
+        employeeCount:
+          type: integer
+        workingDaysPerMonth:
+          type: integer
+        workingHoursPerDay:
+          type: number
+        fixedCosts:
+          type: number
+        targetProfit:
+          type: number
+        commissionModel:
+          $ref: "#/components/schemas/CommissionModel"
+        commissionConfig:
+          $ref: "#/components/schemas/CommissionConfig"
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceItem"
+        resultSnapshot:
+          $ref: "#/components/schemas/ReverseTargetResult"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ScenarioInput:
+      type: object
+      required:
+        - name
+        - businessType
+        - employeeCount
+        - workingDaysPerMonth
+        - workingHoursPerDay
+        - fixedCosts
+        - targetProfit
+        - commissionModel
+        - commissionConfig
+        - services
+      properties:
+        name:
+          type: string
+          minLength: 1
+        businessType:
+          $ref: "#/components/schemas/BusinessType"
+        employeeCount:
+          type: integer
+          minimum: 1
+        workingDaysPerMonth:
+          type: integer
+          minimum: 1
+          maximum: 31
+        workingHoursPerDay:
+          type: number
+          minimum: 1
+          maximum: 24
+        fixedCosts:
+          type: number
+          minimum: 0
+        targetProfit:
+          type: number
+          minimum: 0
+        commissionModel:
+          $ref: "#/components/schemas/CommissionModel"
+        commissionConfig:
+          $ref: "#/components/schemas/CommissionConfig"
+        services:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ServiceItem"
+
+    ScenarioUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        businessType:
+          $ref: "#/components/schemas/BusinessType"
+        employeeCount:
+          type: integer
+          minimum: 1
+        workingDaysPerMonth:
+          type: integer
+          minimum: 1
+          maximum: 31
+        workingHoursPerDay:
+          type: number
+          minimum: 1
+          maximum: 24
+        fixedCosts:
+          type: number
+          minimum: 0
+        targetProfit:
+          type: number
+          minimum: 0
+        commissionModel:
+          $ref: "#/components/schemas/CommissionModel"
+        commissionConfig:
+          $ref: "#/components/schemas/CommissionConfig"
+        services:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ServiceItem"
+
+    AdminLoginInput:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+          minLength: 1
+
+    AdminSession:
+      type: object
+      required: [authenticated]
+      properties:
+        authenticated:
+          type: boolean
+
+    AdminAccountSummary:
+      type: object
+      required:
+        - id
+        - email
+        - businessName
+        - tier
+        - scenarioCount
+        - scenarioLimit
+        - exportEnabled
+        - benchmarkAccess
+        - packageExpiresAt
+        - createdAt
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        businessName:
+          type: ["string", "null"]
+        tier:
+          $ref: "#/components/schemas/Tier"
+        scenarioCount:
+          type: integer
+        scenarioLimit:
+          type: ["integer", "null"]
+        exportEnabled:
+          type: boolean
+        benchmarkAccess:
+          type: boolean
+        packageExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminHistoryEntry:
+      type: object
+      required:
+        - id
+        - previousTier
+        - newTier
+        - previousExpiresAt
+        - newExpiresAt
+        - note
+        - createdAt
+      properties:
+        id:
+          type: integer
+        previousTier:
+          $ref: "#/components/schemas/Tier"
+        newTier:
+          $ref: "#/components/schemas/Tier"
+        previousExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+        newExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+        note:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminAccountDetail:
+      type: object
+      required:
+        - id
+        - email
+        - businessName
+        - tier
+        - scenarioCount
+        - scenarioLimit
+        - exportEnabled
+        - benchmarkAccess
+        - packageStartedAt
+        - packageExpiresAt
+        - createdAt
+        - history
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        businessName:
+          type: ["string", "null"]
+        tier:
+          $ref: "#/components/schemas/Tier"
+        scenarioCount:
+          type: integer
+        scenarioLimit:
+          type: ["integer", "null"]
+        exportEnabled:
+          type: boolean
+        benchmarkAccess:
+          type: boolean
+        packageStartedAt:
+          type: ["string", "null"]
+          format: date-time
+        packageExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminHistoryEntry"
+
+    AdminAccountUpdate:
+      type: object
+      properties:
+        tier:
+          $ref: "#/components/schemas/Tier"
+        scenarioLimit:
+          type: ["integer", "null"]
+        exportEnabled:
+          type: boolean
+        benchmarkAccess:
+          type: boolean
+        packageStartedAt:
+          type: ["string", "null"]
+          format: date-time
+        packageExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+        note:
+          type: ["string", "null"]

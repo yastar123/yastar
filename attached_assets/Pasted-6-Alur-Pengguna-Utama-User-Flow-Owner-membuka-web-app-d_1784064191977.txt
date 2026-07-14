@@ -1,0 +1,18 @@
+6. Alur Pengguna Utama (User Flow)
+
+
+Owner membuka web app → diminta login dengan akun Google sebelum bisa memakai kalkulator.
+Setelah login, owner otomatis mendapat jatah/tier gratis (indikasi 3-5x simulasi atau batas skenario tertentu, lihat 7.3) yang nempel ke akunnya.
+Owner pilih jenis usaha (barbershop/salon/nail/spa — untuk preset default, tetap bisa custom).
+Input data dasar: biaya tetap bulanan (sewa, listrik, dll), daftar layanan + harga, jumlah karyawan, skema komisi yang berlaku/direncanakan, serta target profit bulanan yang diinginkan.
+Owner menekan tombol "Simulasikan" → sistem menampilkan jumlah klien yang dibutuhkan (total & per karyawan), per hari/minggu/bulan, indikator Cek Realistis, dan rekomendasi dari Rules-Based Insight Engine kalau ada target yang tidak realistis atau angka di luar rentang wajar.
+Owner bisa ubah salah satu variabel (misal naikkan komisi) dan menekan "Simulasikan" lagi untuk melihat hasil baru — didorong bebas bereksperimen.
+Owner menyimpan skenario dengan nama (misal "Skema A") — otomatis tersimpan ke akun. Jumlah skenario yang bisa disimpan dibatasi sesuai tier (lihat 7.3).
+Kalau owner butuh lebih (simpan lebih banyak skenario, unlock fitur lain), diarahkan ke tombol/link "Upgrade Paket" yang membuka chat WhatsApp ke admin.
+Owner mengirim bukti pembayaran (transfer/QRIS/e-wallet) langsung ke admin via chat. Admin mengecek dan mengonfirmasi pembayaran secara manual — proses ini kemungkinan besar terjadi di jam malam/luar jam kerja (lihat 7.7), karena itu jam yang paling mungkin dipakai owner untuk mikirin urusan bisnis sekaligus jam admin standby.
+Admin membuka admin dashboard, mencari akun owner (berdasarkan email), lalu mengatur tier paket (Starter/Professional) dan masa berlakunya sesuai nominal yang dibayar.
+Status paket owner otomatis berubah di aplikasinya tanpa perlu logout-login ulang, begitu admin menyimpan perubahan di dashboard.
+Owner lanjut simulasi dengan tier baru, simpan lebih banyak skenario, dan export/share hasil (PDF/WhatsApp).
+Owner menerima reminder menjelang masa berlaku paketnya habis — dan kembali memakai produk saat menghadapi trigger keputusan baru (naik sewa, mau rekrut, komisi mau diubah), bukan dipaksa oleh siklus bulanan buatan.
+
+

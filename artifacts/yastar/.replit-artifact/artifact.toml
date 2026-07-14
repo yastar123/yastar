@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Yastar"
+version = "1.0.0"
+id = "artifacts/yastar"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22292
+
+[services.development]
+run = "pnpm --filter @workspace/yastar run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/yastar", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/yastar/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22292"
+BASE_PATH = "/"
