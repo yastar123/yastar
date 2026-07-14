@@ -2,6 +2,7 @@ import { useLocation } from 'wouter';
 import { ArrowRight, Compass, Scissors, Sparkles, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ValueProposition } from '@/components/value-proposition';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -45,6 +46,8 @@ export default function HomePage() {
             </Button>
           </div>
         </section>
+
+        <ValueProposition />
 
         <section className="grid md:grid-cols-3 gap-4 pb-24">
           <FeatureCard
