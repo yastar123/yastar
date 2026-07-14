@@ -1,0 +1,51 @@
+Perubahan mendasar dari v0.5: Model lama (prabayar 30 hari, jatah dihitung per klik tombol "Simulasikan") diganti karena tidak selaras dengan pola pakai yang jarang/event-driven — owner akan merasa "harus hemat klik" padahal tujuannya justru mendorong eksperimen bebas. Model baru membatasi berdasarkan fitur dan jumlah skenario tersimpan, dengan masa berlaku yang jauh lebih panjang.
+
+7.1 Unit Pembatasan: Fitur & Skenario, Bukan Jumlah Klik
+
+
+Owner bebas menekan tombol "Simulasikan" berkali-kali tanpa dibatasi jumlah klik.
+Yang dibatasi antar tier: jumlah skenario yang bisa disimpan bersamaan, akses export/share, dan (di masa depan) akses ke benchmark data.
+Tier gratis: bisa simulasi bebas, tapi hanya bisa menyimpan jumlah skenario terbatas (indikasi 1-2 skenario, perlu dikonfirmasi riset).
+
+
+7.2 Masa Berlaku: Selaras dengan Siklus Keputusan, Bukan Siklus Gajian Bulanan
+
+Masa berlaku paket diperpanjang secara signifikan (indikasi 1 tahun, perlu divalidasi lewat riset — lihat Bagian 8 pertanyaan baru soal frekuensi trigger keputusan besar). Alasan: kalau siklus keputusan besar (naik komisi, buka cabang, dst) rata-rata terjadi setahun sekali atau lebih jarang, memaksakan siklus 30 hari membuat owner merasa dirugikan kalau tidak sempat memakai jatahnya. Siklus gajian bulanan tetap dicatat sebagai salah satu momen relevan untuk reminder, tapi tidak lagi jadi dasar utama penentuan masa berlaku paket.
+
+Catatan penting yang perlu tetap diuji: memperpanjang masa berlaku ke 1 tahun tidak sepenuhnya menghilangkan tantangan pembelian ulang — secara ekonomi, paket "1 tahun unlimited" bisa jadi hampir setara dengan one-time purchase kalau ternyata trigger keputusan besar owner rata-rata terjadi lebih jarang dari setahun sekali. Ini harus dicek langsung di riset (Bagian 8), bukan diasumsikan benar hanya karena terdengar lebih masuk akal daripada siklus 30 hari.
+
+7.3 Struktur Tingkatan Paket ("Paket Keputusan")
+
+PaketIsi (indikatif — perlu divalidasi riset)Fungsi strategisGratisSimulasi bebas tanpa batas klik, simpan 1-2 skenario, wajib login GoogleTitik masuk, membiarkan owner merasakan value sepenuhnya sebelum membeliStarterSimpan hingga 5 skenario, export/share aktif, masa berlaku ~1 tahun (indikatif)Opsi untuk owner dengan kebutuhan sekali/dua kali evaluasi besarProfessionalSimpan skenario unlimited, export bebas, akses lebih dulu ke fitur benchmark saat rilis, masa berlaku ~1 tahun (indikatif)Opsi utama untuk owner serius atau yang mengelola beberapa cabang
+
+Angka pasti batas skenario, harga, dan masa berlaku tiap tingkatan masih menunggu hasil riset Bagian 8 — termasuk validasi apakah 1 tahun adalah durasi yang tepat atau perlu disesuaikan (lebih panjang, atau bahkan model one-time-lifetime jika trigger keputusan ternyata sangat jarang).
+
+7.4 Fungsi Reminder dalam Model Baru
+
+Reminder berfungsi mendorong dua tindakan: (a) memanfaatkan sisa masa berlaku sebelum hangus, dan (b) mengingatkan owner tentang tool ini saat momen relevan mendekat (jelang gajian, awal tahun anggaran, dll) — sebagai satu sinyal di antara beberapa, bukan satu-satunya pemicu pembelian ulang seperti di model v0.5.
+
+7.5 Jalur Lain
+
+
+B2B ke jaringan franchise dipertimbangkan sebagai jalur distribusi yang berpotensi menjadi jalur utama pertumbuhan (bukan sekadar sekunder), mengingat sifat pemakaian produk yang jarang membuat pertumbuhan organik satu-per-satu owner relatif lambat (lihat 11.4).
+Opsi lead-magnet/tools gratis yang funnel ke jasa lain (konsultasi bisnis, kelas buka usaha) tetap dicatat sebagai kemungkinan sekunder.
+
+
+7.6 Alur Upgrade Paket: Chat Admin Manual
+
+Untuk tahap MVP/validasi, upgrade paket tidak memakai payment gateway otomatis, melainkan alur manual:
+
+
+Owner klik tombol "Upgrade Paket" di aplikasi → diarahkan ke chat WhatsApp admin.
+Owner memilih paket (Starter/Professional), melakukan pembayaran manual (transfer/QRIS/e-wallet) langsung ke admin, dan mengirim bukti pembayaran via chat.
+Admin memverifikasi pembayaran secara manual.
+Admin membuka admin dashboard, mencari akun owner (berdasarkan email dari akun Google-nya), lalu mengatur:
+
+Tier paket yang diberikan (Starter/Professional)
+Batas skenario & fitur yang di-unlock
+Tanggal mulai & tanggal habis masa berlaku
+
+
+
+Perubahan role/akses tersebut langsung aktif di akun owner tanpa perlu owner logout-login ulang.
+Dashboard mencatat riwayat perubahan (siapa, kapan, paket apa) sebagai referensi/laporan sederhana.

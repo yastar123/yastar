@@ -1,0 +1,21 @@
+buatkan saya bisnis saas webapp dengan nama "yastar" untuk tampilan buat minimalis dan buat dengan reactJS + ExpressJS + PostgreSQL
+
+Sebuah web app yang membantu pemilik salon/barbershop mengambil keputusan bisnis terkait komisi, rekrutmen, dan harga layanan — dengan cara kerja mundur (reverse calculation): mulai dari target profit yang diinginkan, sistem menghitung berapa banyak klien yang dibutuhkan tiap karyawan untuk mencapainya, lalu memberi rekomendasi (bukan cuma angka mentah) saat target tidak realistis.
+
+Positioning eksplisit: Ini bukan "kalkulator komisi". ​Ini adalah alat pengambil keputusan untuk pertanyaan seperti "kalau saya naikkan komisi ke 45%, rugi tidak?", "berapa lama kapster baru balik modal?", atau "mending tambah staf atau buka cabang baru?". Bahasa marketing dan UI harus konsisten menjual jawaban atas pertanyaan tersebut, bukan menjual "fitur simulasi".
+
+Yang membedakan dari software kasir salon yang sudah ada (Glossify, Majoo, Moka, Qasir, Kluto, dll.): mereka mencatat transaksi yang sudah terjadi dan berlomba di ranah POS/payroll/booking yang sudah sangat ramai. Produk ini sengaja mengambil ruang yang hampir kosong di pasar Indonesia: business decision software, bukan pencatatan operasional.
+
+Kenapa bukan dashboard bulanan yang butuh input rutin: Produk ini sengaja tidak dirancang untuk dibuka setiap bulan dengan cara meminta owner mencatat data operasional secara rutin. Itu akan mengubah produk ini diam-diam menjadi POS-lite, bertentangan dengan positioning inti, dan berisiko gagal karena bergantung pada disiplin input manual pengguna. Sebagai gantinya, produk ini menerima bahwa pemakaiannya jarang tapi bernilai tinggi per pemakaian — mirip software pajak, legal, atau valuasi bisnis, yang nilainya datang dari besarnya keputusan yang dibantu, bukan dari frekuensi buka aplikasi.
+
+Target Pengguna
+Primer: Pemilik/owner salon atau barbershop independen (1-5 cabang), skala UKM, dengan dua sub-segmen yang kebutuhannya sedikit berbeda:
+
+Calon owner (belum buka usaha): butuh validasi apakah rencana modal/harga/komisi realistis sebelum keluar modal. Stakes tinggi, pemakaian kemungkinan besar 1x sampai beberapa kali di fase perencanaan. Owner yang sudah berjalan: butuh evaluasi ulang saat ada pemicu/event spesifik — mau ubah skema komisi, sewa naik, UMR berubah, mau rekrut, mau tambah cabang, ada kompetitor baru. Pemakaian jarang, dipicu kejadian (event-driven), bukan siklus rutin bulanan yang dipaksakan.
+
+Tujuan Produk
+Membantu owner membuat keputusan skema komisi & harga berbasis angka dan rekomendasi, bukan feeling. Mengurangi risiko owner baru yang salah hitung modal/BEP saat mau buka usaha. Menjadi alat bantu keputusan bernilai tinggi yang dipakai saat dibutuhkan (event-driven) — model harga dan siklus produk didesain untuk selaras dengan pola pakai ini, bukan memaksa retensi harian/bulanan yang tidak natural untuk kategori produk ini.
+
+5.1a Strategi Arsitektur Data
+
+Semua pengguna wajib login dengan akun Google sebelum bisa memakai kalkulator — termasuk untuk memakai jatah simulasi gratis. Konsekuensi positif: jatah gratis tidak bisa direset dengan hapus cache/incognito karena nempel ke akun; email owner otomatis didapat sejak awal untuk reminder; data skenario otomatis tersimpan ke akun sejak simulasi pertama. Data yang disimpan per akun tetap ringan — angka-angka input skenario (harga, komisi, jumlah karyawan, dll), tier paket, dan tanggal kedaluwarsa paket, bukan data berat seperti gambar/dokumen. Konsekuensi lain: karena wajib login, ada kemungkinan sebagian calon pengguna urung mencoba karena malas login. Ini trade-off yang diterima demi mencegah penyalahgunaan jatah gratis — worth dipantau di metrik (Bagian 10) apakah wajib login ini berdampak besar ke tingkat percobaan pertama.
