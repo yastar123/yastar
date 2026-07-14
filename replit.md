@@ -54,6 +54,13 @@ need, whether that's realistic, and where the plan is fragile.
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
 
+## Setup status (imported project)
+
+- Dependencies installed, DB schema pushed, demo accounts seeded via `pnpm --filter @workspace/scripts run seed`.
+- Clerk is provisioned via Replit-managed Clerk (`CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY` are set).
+- `ADMIN_PASSWORD` secret was requested from the user but not yet provided — the admin dashboard (`/admin`) will not work until it's set. Everything else (marketing home, calculator) runs fine without it.
+- Workflows: `artifacts/api-server: API Server`, `artifacts/yastar: web`, `artifacts/mockup-sandbox: Component Preview Server` — all running.
+
 ## Gotchas
 
 - After changing `lib/api-spec`'s OpenAPI file, always re-run its `codegen` script — the frontend imports generated hooks/types from `@workspace/api-client-react`, not the spec directly.
