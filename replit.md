@@ -14,8 +14,9 @@ need, whether that's realistic, and where the plan is fragile.
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/scripts run seed` — seed demo owner accounts (one per tier) with sample scenarios; safe to re-run
-- Required env: `DATABASE_URL` — Postgres connection string
-- Required secrets: `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY` (owner sign-in), `ADMIN_PASSWORD` (internal admin dashboard), `SESSION_SECRET` (admin session signing)
+- Required env: `DATABASE_URL` — Postgres connection string (runtime-managed by Replit, set automatically)
+- Required secrets: `ADMIN_PASSWORD` (internal admin dashboard at `/admin`), `SESSION_SECRET` (signs owner + admin session cookies)
+- Note: Clerk packages are present but owner auth uses custom scrypt/HMAC sessions — no Clerk keys needed for dev
 
 ## Stack
 
