@@ -65,11 +65,11 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Demo accounts (seeded)
 
-| Email | Tier | Skenario |
-|---|---|---|
-| `demo.free@yastar.app` | Free | 2 maks |
-| `demo.starter@yastar.app` | Starter | 15 maks |
-| `demo.professional@yastar.app` | Professional | Unlimited |
+| Email | Password | Tier | Skenario |
+|---|---|---|---|
+| `demo.free@yastar.app` | `demo1234` | Free | 2 maks |
+| `demo.starter@yastar.app` | `demo1234` | Starter | 15 maks |
+| `demo.professional@yastar.app` | `demo1234` | Professional | Unlimited |
 
 **Admin dashboard:** buka `/admin` → masukkan password dari `ADMIN_PASSWORD` secret.
 

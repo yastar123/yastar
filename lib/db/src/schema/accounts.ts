@@ -27,6 +27,7 @@ export const accountsTable = pgTable(
     benchmarkAccess: boolean("benchmark_access").notNull().default(false),
     packageStartedAt: timestamp("package_started_at", { withTimezone: true }),
     packageExpiresAt: timestamp("package_expires_at", { withTimezone: true }),
+    passwordHash: text("password_hash"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

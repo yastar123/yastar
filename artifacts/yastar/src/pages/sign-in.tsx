@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 export default function SignInPage() {
   const { login } = useOwnerAuth();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [, setLocation] = useLocation();
@@ -18,7 +19,7 @@ export default function SignInPage() {
     setLoading(true);
     setError('');
     try {
-      await login(email.trim());
+      await login(email.trim(), password);
       setLocation('/user-portal');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login gagal');
@@ -36,7 +37,7 @@ export default function SignInPage() {
       >
         <div className="flex flex-col gap-1">
           <h2 className="text-2xl font-bold text-foreground">Selamat datang kembali</h2>
-          <p className="text-sm text-muted-foreground">Masukkan email akun Yastar Anda untuk masuk.</p>
+          <p className="text-sm text-muted-foreground">Masuk ke akun Yastar Anda.</p>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -53,13 +54,30 @@ export default function SignInPage() {
           />
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            data-testid="input-password"
+          />
+        </div>
+
         {error && (
           <p className="text-sm text-destructive" data-testid="text-login-error">
             {error}
           </p>
         )}
 
-        <Button type="submit" disabled={loading || !email.trim()} data-testid="button-sign-in">
+        <Button
+          type="submit"
+          disabled={loading || !email.trim() || !password}
+          data-testid="button-sign-in"
+        >
           {loading ? 'Memuat…' : 'Masuk'}
         </Button>
 

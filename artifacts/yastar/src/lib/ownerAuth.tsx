@@ -12,7 +12,7 @@ export interface OwnerSession {
 interface OwnerAuthContextType {
   session: OwnerSession | null;
   isLoading: boolean;
-  login: (email: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refetch: () => Promise<void>;
 }
@@ -39,11 +39,11 @@ export function OwnerAuthProvider({ children }: { children: React.ReactNode }) {
     fetchSession();
   }, [fetchSession]);
 
-  const login = async (email: string) => {
+  const login = async (email: string, password: string) => {
     const res = await fetch(`${BASE}/api/owner/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password }),
     });
     if (!res.ok) {
       const err = await res.json();

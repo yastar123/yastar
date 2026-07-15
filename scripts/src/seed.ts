@@ -25,6 +25,18 @@ import {
   type InsertScenario,
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import crypto from "node:crypto";
+import { promisify } from "node:util";
+
+const scrypt = promisify(crypto.scrypt);
+async function hashPassword(plain: string): Promise<string> {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const key = (await scrypt(plain, salt, 64)) as Buffer;
+  return `${salt}:${key.toString("hex")}`;
+}
+
+// All demo accounts share this password for easy testing.
+const DEMO_PASSWORD = "demo1234";
 
 interface DemoAccountSeed {
   clerkUserId: string;
@@ -247,6 +259,8 @@ const demoAccounts: DemoAccountSeed[] = [
 ];
 
 async function seed() {
+  const passwordHash = await hashPassword(DEMO_PASSWORD);
+
   for (const demo of demoAccounts) {
     const [existing] = await db
       .select()
@@ -268,6 +282,7 @@ async function seed() {
           benchmarkAccess: demo.benchmarkAccess,
           packageStartedAt: demo.packageStartedAt,
           packageExpiresAt: demo.packageExpiresAt,
+          passwordHash,
         })
         .where(eq(accountsTable.id, accountId));
 
@@ -286,6 +301,7 @@ async function seed() {
           benchmarkAccess: demo.benchmarkAccess,
           packageStartedAt: demo.packageStartedAt,
           packageExpiresAt: demo.packageExpiresAt,
+          passwordHash,
         })
         .returning();
       accountId = created.id;
