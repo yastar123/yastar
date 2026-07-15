@@ -6,7 +6,7 @@ import { useOwnerAuth } from '@/lib/ownerAuth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import CalculatorPage from '@/pages/calculator';
+import SimulationHubPage from '@/pages/simulation-hub';
 import ScenariosPage from '@/pages/scenarios';
 import { TIER_LABELS } from '@/lib/format';
 
@@ -14,7 +14,7 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 export default function UserPortalPage() {
   const { session, logout } = useOwnerAuth();
-  const [tab, setTab] = useState('calculator');
+  const [tab, setTab] = useState('simulasi');
   const { data: account, refetch } = useGetMyAccount();
 
   if (!session?.authenticated) return <Redirect to="/" />;
@@ -63,15 +63,19 @@ export default function UserPortalPage() {
       <main className="max-w-full mx-auto px-4 py-8">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="mb-6">
-            <TabsTrigger value="calculator" data-testid="tab-calculator">
-              Kalkulator
+            <TabsTrigger value="simulasi" data-testid="tab-simulasi">
+              Simulasi Bisnis
             </TabsTrigger>
             <TabsTrigger value="scenarios" data-testid="tab-scenarios">
               Skenario Tersimpan
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="calculator">
-            <CalculatorPage canSave={canSave} onScenarioSaved={() => refetch()} />
+          <TabsContent value="simulasi">
+            <SimulationHubPage
+              canSave={canSave}
+              account={account}
+              onScenarioSaved={() => refetch()}
+            />
           </TabsContent>
           <TabsContent value="scenarios">
             <ScenariosPage />

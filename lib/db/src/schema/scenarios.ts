@@ -17,17 +17,25 @@ export const scenariosTable = pgTable("scenarios", {
     .notNull()
     .references(() => accountsTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  businessType: text("business_type").notNull(),
-  employeeCount: integer("employee_count").notNull(),
-  workingDaysPerMonth: integer("working_days_per_month").notNull(),
+  // moduleType identifies which calculation module produced this scenario.
+  // 'target_mundur' is the legacy default; new modules set their own type.
+  moduleType: text("module_type").notNull().default("target_mundur"),
+  // moduleInput stores the raw input for non-target_mundur modules (JSONB).
+  // For target_mundur, the specific columns below are used instead.
+  moduleInput: jsonb("module_input"),
+  // ---- target_mundur-specific columns (kept for backward compat) ----
+  businessType: text("business_type").notNull().default("custom"),
+  employeeCount: integer("employee_count").notNull().default(1),
+  workingDaysPerMonth: integer("working_days_per_month").notNull().default(26),
   workingHoursPerDay: numeric("working_hours_per_day", {
     mode: "number",
-  }).notNull(),
-  fixedCosts: numeric("fixed_costs", { mode: "number" }).notNull(),
-  targetProfit: numeric("target_profit", { mode: "number" }).notNull(),
-  commissionModel: text("commission_model").notNull(),
-  commissionConfig: jsonb("commission_config").notNull(),
-  services: jsonb("services").notNull(),
+  }).notNull().default(8),
+  fixedCosts: numeric("fixed_costs", { mode: "number" }).notNull().default(0),
+  targetProfit: numeric("target_profit", { mode: "number" }).notNull().default(0),
+  commissionModel: text("commission_model").notNull().default("flat"),
+  commissionConfig: jsonb("commission_config").notNull().default({}),
+  services: jsonb("services").notNull().default([]),
+  // resultSnapshot holds the calculation result for all module types.
   resultSnapshot: jsonb("result_snapshot").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: Yastar API - reverse business-decision calculator for salons/barbershops
+  version: 0.2.0
+  description: Yastar API - multi-module business decision software
 servers:
   - url: /api
     description: Base API path
@@ -11,11 +11,13 @@ tags:
   - name: health
     description: Health operations
   - name: calculate
-    description: Reverse-calculation engine (not persisted)
+    description: Calculation engine (stateless)
   - name: account
     description: Current owner account/tier info
   - name: scenarios
     description: Saved scenarios
+  - name: cost-items
+    description: Saved HPP cost items
   - name: admin
     description: Internal admin dashboard
 paths:
@@ -24,7 +26,6 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -83,6 +84,156 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /calculate/hpp:
+    post:
+      operationId: calculateHpp
+      tags: [calculate]
+      summary: Calculate HPP (Harga Pokok Produksi/Layanan) for a product or service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HppInput"
+      responses:
+        "200":
+          description: HPP calculation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HppResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /calculate/bep-usaha:
+    post:
+      operationId: calculateBepUsaha
+      tags: [calculate]
+      summary: Calculate business-level Break-Even Point (BEP Usaha)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BepUsahaInput"
+      responses:
+        "200":
+          description: BEP Usaha result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BepUsahaResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /calculate/harga-jual:
+    post:
+      operationId: calculateHargaJual
+      tags: [calculate]
+      summary: Calculate optimal selling price or actual margin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HargaJualInput"
+      responses:
+        "200":
+          description: Harga jual result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HargaJualResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /calculate/pajak:
+    post:
+      operationId: calculatePajak
+      tags: [calculate]
+      summary: Estimate monthly tax for UMKM (PPh Final 0.5% or PPh Pasal 17)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PajakInput"
+      responses:
+        "200":
+          description: Pajak estimate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PajakResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /calculate/ekspansi:
+    post:
+      operationId: calculateEkspansi
+      tags: [calculate]
+      summary: Evaluate feasibility of opening a new branch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EkspansiInput"
+      responses:
+        "200":
+          description: Ekspansi feasibility result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EkspansiResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /calculate/pinjaman:
+    post:
+      operationId: calculatePinjaman
+      tags: [calculate]
+      summary: Simulate a business loan (flat or annuity)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PinjamanInput"
+      responses:
+        "200":
+          description: Pinjaman simulation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PinjamanResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /me:
     get:
       operationId: getMyAccount
@@ -102,11 +253,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /cost-items:
+    get:
+      operationId: listCostItems
+      tags: [cost-items]
+      summary: List the current owner's saved HPP cost items
+      responses:
+        "200":
+          description: List of cost items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CostItem"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createCostItem
+      tags: [cost-items]
+      summary: Save a new HPP cost item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CostItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CostItem"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /scenarios:
     get:
       operationId: listScenarios
       tags: [scenarios]
-      summary: List the current owner's saved scenarios
+      summary: List the current owner's saved scenarios (all module types)
       responses:
         "200":
           description: List of scenarios
@@ -125,7 +326,7 @@ paths:
     post:
       operationId: createScenario
       tags: [scenarios]
-      summary: Save a new scenario (subject to tier scenario limit)
+      summary: Save a new target_mundur scenario
       requestBody:
         required: true
         content:
@@ -153,6 +354,43 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Scenario limit reached for current tier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /scenarios/module:
+    post:
+      operationId: createModuleScenario
+      tags: [scenarios]
+      summary: Save a scenario for any module type (hpp, bep_usaha, harga_jual, etc.)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModuleScenarioInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Scenario limit reached or module access denied
           content:
             application/json:
               schema:
@@ -191,7 +429,7 @@ paths:
     patch:
       operationId: updateScenario
       tags: [scenarios]
-      summary: Update/rename a saved scenario, recomputes result snapshot
+      summary: Update/rename a saved scenario
       parameters:
         - name: id
           in: path
@@ -259,7 +497,7 @@ paths:
     post:
       operationId: loginAdmin
       tags: [admin]
-      summary: Log into the internal admin dashboard with the shared admin password
+      summary: Log into the internal admin dashboard
       requestBody:
         required: true
         content:
@@ -403,7 +641,7 @@ paths:
     patch:
       operationId: updateAdminAccount
       tags: [admin]
-      summary: Set an owner's tier, scenario limit, export access and package expiry (admin only)
+      summary: Set an owner's tier, scenario limit, module access, and package expiry (admin only)
       parameters:
         - name: id
           in: path
@@ -471,9 +709,52 @@ components:
       type: string
       enum: [free, starter, professional]
 
+    ModuleType:
+      type: string
+      enum:
+        - target_mundur
+        - break_even_karyawan
+        - hpp
+        - harga_jual
+        - bep_usaha
+        - ekspansi
+        - pinjaman
+        - pajak
+
+    ModuleAccess:
+      type: object
+      properties:
+        target_mundur:
+          type: boolean
+        break_even_karyawan:
+          type: boolean
+        hpp:
+          type: boolean
+        harga_jual:
+          type: boolean
+        bep_usaha:
+          type: boolean
+        ekspansi:
+          type: boolean
+        pinjaman:
+          type: boolean
+        pajak:
+          type: boolean
+
     InsightSeverity:
       type: string
       enum: [info, success, warning, danger]
+
+    Insight:
+      type: object
+      required: [severity, code, message]
+      properties:
+        severity:
+          $ref: "#/components/schemas/InsightSeverity"
+        code:
+          type: string
+        message:
+          type: string
 
     ServiceItem:
       type: object
@@ -503,10 +784,6 @@ components:
 
     CommissionConfig:
       type: object
-      description: >
-        Fields are interpreted based on the sibling commissionModel value.
-        flat -> flatPercent. base_plus_commission -> baseSalary + baseCommissionPercent.
-        tiered -> tiers.
       properties:
         flatPercent:
           type: ["number", "null"]
@@ -523,17 +800,6 @@ components:
           type: ["array", "null"]
           items:
             $ref: "#/components/schemas/CommissionTier"
-
-    Insight:
-      type: object
-      required: [severity, code, message]
-      properties:
-        severity:
-          $ref: "#/components/schemas/InsightSeverity"
-        code:
-          type: string
-        message:
-          type: string
 
     ReverseTargetInput:
       type: object
@@ -677,49 +943,349 @@ components:
           items:
             $ref: "#/components/schemas/Insight"
 
-    Account:
+    # ─── HPP ─────────────────────────────────────────────────────────────────
+
+    RawMaterialItem:
       type: object
-      required:
-        - id
-        - email
-        - businessName
-        - tier
-        - scenarioLimit
-        - scenarioCount
-        - exportEnabled
-        - benchmarkAccess
-        - packageStartedAt
-        - packageExpiresAt
+      required: [name, qty, unitPrice]
+      properties:
+        name:
+          type: string
+        qty:
+          type: number
+          minimum: 0
+        unitPrice:
+          type: number
+          minimum: 0
+
+    HppInput:
+      type: object
+      required: [mode, nama]
+      properties:
+        mode:
+          type: string
+          enum: [produk, jasa]
+        nama:
+          type: string
+          minLength: 1
+        sellingPrice:
+          type: ["number", "null"]
+          minimum: 0
+        # produk fields
+        rawMaterials:
+          type: array
+          items:
+            $ref: "#/components/schemas/RawMaterialItem"
+          default: []
+        directLaborCostPerUnit:
+          type: number
+          minimum: 0
+          default: 0
+        monthlyOverhead:
+          type: number
+          minimum: 0
+          default: 0
+        estimatedUnitsPerMonth:
+          type: number
+          minimum: 1
+          default: 1
+        packagingCostPerUnit:
+          type: number
+          minimum: 0
+          default: 0
+        # jasa fields
+        consumablesPerSession:
+          type: array
+          items:
+            $ref: "#/components/schemas/RawMaterialItem"
+          default: []
+        monthlyFixedCosts:
+          type: number
+          minimum: 0
+          default: 0
+        estimatedSessionsPerMonth:
+          type: number
+          minimum: 1
+          default: 1
+        therapistCommissionPerSession:
+          type: number
+          minimum: 0
+          default: 0
+
+    HppResult:
+      type: object
+      required: [hpp, insights, breakdown]
+      properties:
+        hpp:
+          type: number
+        sellingPrice:
+          type: ["number", "null"]
+        margin:
+          type: ["number", "null"]
+        markup:
+          type: ["number", "null"]
+        breakdown:
+          type: object
+          additionalProperties:
+            type: number
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Insight"
+
+    # ─── BEP Usaha ───────────────────────────────────────────────────────────
+
+    BepUsahaInput:
+      type: object
+      required: [totalBiayaTetapBulanan, hargaJualPerUnit, hppPerUnit]
+      properties:
+        totalBiayaTetapBulanan:
+          type: number
+          minimum: 0
+        hargaJualPerUnit:
+          type: number
+          minimum: 0
+        hppPerUnit:
+          type: number
+          minimum: 0
+
+    BepUsahaResult:
+      type: object
+      required: [kontribusiMarginPerUnit, unitBepBulanan, revenueBepBulanan, insights]
+      properties:
+        kontribusiMarginPerUnit:
+          type: number
+        unitBepBulanan:
+          type: number
+        revenueBepBulanan:
+          type: number
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Insight"
+
+    # ─── Harga Jual ──────────────────────────────────────────────────────────
+
+    HargaJualInput:
+      type: object
+      required: [mode, hpp]
+      properties:
+        mode:
+          type: string
+          enum: [dari_hpp, dari_harga]
+        hpp:
+          type: number
+          minimum: 0
+        targetMarginPercent:
+          type: ["number", "null"]
+          minimum: 0
+          maximum: 99.99
+        targetMarkupPercent:
+          type: ["number", "null"]
+          minimum: 0
+        hargaJual:
+          type: ["number", "null"]
+          minimum: 0
+
+    HargaJualResult:
+      type: object
+      required: [mode, hpp, insights]
+      properties:
+        mode:
+          type: string
+        hpp:
+          type: number
+        hargaDariMargin:
+          type: ["number", "null"]
+        hargaDariMarkup:
+          type: ["number", "null"]
+        marginAktual:
+          type: ["number", "null"]
+        markupAktual:
+          type: ["number", "null"]
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Insight"
+
+    # ─── Pajak ───────────────────────────────────────────────────────────────
+
+    PajakInput:
+      type: object
+      required: [omzetBulanan, skema]
+      properties:
+        omzetBulanan:
+          type: number
+          minimum: 0
+        skema:
+          type: string
+          enum: [ppfinal, normal]
+        totalBiayaBulanan:
+          type: ["number", "null"]
+          minimum: 0
+
+    PajakResult:
+      type: object
+      required: [pajakBulanan, skema, disclaimer, insights]
+      properties:
+        pajakBulanan:
+          type: number
+        skema:
+          type: string
+        disclaimer:
+          type: string
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Insight"
+
+    # ─── Ekspansi ────────────────────────────────────────────────────────────
+
+    EkspansiInput:
+      type: object
+      required: [modalAwal, revenueBulanan, biayaTetapBulanan, hppPercentOfRevenue]
+      properties:
+        modalAwal:
+          type: number
+          minimum: 0
+        revenueBulanan:
+          type: number
+          minimum: 0
+        biayaTetapBulanan:
+          type: number
+          minimum: 0
+        hppPercentOfRevenue:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    EkspansiResult:
+      type: object
+      required: [profitBulananProyeksi, paybackPeriodBulan, paybackPeriodTahun, roiTahunan, insights]
+      properties:
+        profitBulananProyeksi:
+          type: number
+        paybackPeriodBulan:
+          type: number
+        paybackPeriodTahun:
+          type: number
+        roiTahunan:
+          type: number
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Insight"
+
+    # ─── Pinjaman ────────────────────────────────────────────────────────────
+
+    PinjamanInput:
+      type: object
+      required: [plafonPinjaman, sukuBungaTahunan, tenorBulan, metode]
+      properties:
+        plafonPinjaman:
+          type: number
+          minimum: 0
+        sukuBungaTahunan:
+          type: number
+          minimum: 0
+          maximum: 100
+        tenorBulan:
+          type: integer
+          minimum: 1
+          maximum: 360
+        metode:
+          type: string
+          enum: [flat, anuitas]
+        profitBulananSaatIni:
+          type: ["number", "null"]
+          minimum: 0
+
+    JadwalCicilan:
+      type: object
+      required: [bulan, pokokBayar, bungaBayar, totalCicilan, saldo]
+      properties:
+        bulan:
+          type: integer
+        pokokBayar:
+          type: number
+        bungaBayar:
+          type: number
+        totalCicilan:
+          type: number
+        saldo:
+          type: number
+
+    PinjamanResult:
+      type: object
+      required: [cicilanBulanan, totalBunga, totalPembayaran, jadwal, insights]
+      properties:
+        cicilanBulanan:
+          type: number
+        totalBunga:
+          type: number
+        totalPembayaran:
+          type: number
+        profitSetelahCicilan:
+          type: ["number", "null"]
+        jadwal:
+          type: array
+          items:
+            $ref: "#/components/schemas/JadwalCicilan"
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Insight"
+
+    # ─── Cost Items ──────────────────────────────────────────────────────────
+
+    CostItemInput:
+      type: object
+      required: [nama, mode, hppInput, hppResult]
+      properties:
+        nama:
+          type: string
+          minLength: 1
+        mode:
+          type: string
+          enum: [produk, jasa]
+        hppInput:
+          type: object
+          additionalProperties: true
+        hppResult:
+          type: object
+          additionalProperties: true
+
+    CostItem:
+      type: object
+      required: [id, nama, mode, hppInput, hppResult, createdAt, updatedAt]
       properties:
         id:
           type: integer
-        email:
+        nama:
           type: string
-        businessName:
-          type: ["string", "null"]
-        tier:
-          $ref: "#/components/schemas/Tier"
-        scenarioLimit:
-          type: ["integer", "null"]
-          description: Null means unlimited
-        scenarioCount:
-          type: integer
-        exportEnabled:
-          type: boolean
-        benchmarkAccess:
-          type: boolean
-        packageStartedAt:
-          type: ["string", "null"]
+        mode:
+          type: string
+        hppInput:
+          type: object
+          additionalProperties: true
+        hppResult:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
           format: date-time
-        packageExpiresAt:
-          type: ["string", "null"]
+        updatedAt:
+          type: string
           format: date-time
+
+    # ─── Scenarios ───────────────────────────────────────────────────────────
 
     Scenario:
       type: object
       required:
         - id
         - name
+        - moduleType
         - businessType
         - employeeCount
         - workingDaysPerMonth
@@ -737,8 +1303,14 @@ components:
           type: integer
         name:
           type: string
+        moduleType:
+          type: string
+          default: target_mundur
+        moduleInput:
+          type: ["object", "null"]
+          additionalProperties: true
         businessType:
-          $ref: "#/components/schemas/BusinessType"
+          type: string
         employeeCount:
           type: integer
         workingDaysPerMonth:
@@ -750,15 +1322,18 @@ components:
         targetProfit:
           type: number
         commissionModel:
-          $ref: "#/components/schemas/CommissionModel"
+          type: string
         commissionConfig:
-          $ref: "#/components/schemas/CommissionConfig"
+          type: object
+          additionalProperties: true
         services:
           type: array
           items:
-            $ref: "#/components/schemas/ServiceItem"
+            type: object
+            additionalProperties: true
         resultSnapshot:
-          $ref: "#/components/schemas/ReverseTargetResult"
+          type: object
+          additionalProperties: true
         createdAt:
           type: string
           format: date-time
@@ -847,6 +1422,67 @@ components:
           items:
             $ref: "#/components/schemas/ServiceItem"
 
+    ModuleScenarioInput:
+      type: object
+      required: [name, moduleType, moduleInput, resultSnapshot]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        moduleType:
+          type: string
+          minLength: 1
+        moduleInput:
+          type: object
+          additionalProperties: true
+        resultSnapshot:
+          type: object
+          additionalProperties: true
+
+    # ─── Account ─────────────────────────────────────────────────────────────
+
+    Account:
+      type: object
+      required:
+        - id
+        - email
+        - businessName
+        - tier
+        - scenarioLimit
+        - scenarioCount
+        - exportEnabled
+        - benchmarkAccess
+        - packageStartedAt
+        - packageExpiresAt
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        businessName:
+          type: ["string", "null"]
+        tier:
+          $ref: "#/components/schemas/Tier"
+        scenarioLimit:
+          type: ["integer", "null"]
+          description: Null means unlimited
+        scenarioCount:
+          type: integer
+        exportEnabled:
+          type: boolean
+        benchmarkAccess:
+          type: boolean
+        moduleAccess:
+          oneOf:
+            - $ref: "#/components/schemas/ModuleAccess"
+            - type: "null"
+        packageStartedAt:
+          type: ["string", "null"]
+          format: date-time
+        packageExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+
     AdminLoginInput:
       type: object
       required: [password]
@@ -892,6 +1528,10 @@ components:
           type: boolean
         benchmarkAccess:
           type: boolean
+        moduleAccess:
+          oneOf:
+            - $ref: "#/components/schemas/ModuleAccess"
+            - type: "null"
         packageExpiresAt:
           type: ["string", "null"]
           format: date-time
@@ -960,6 +1600,10 @@ components:
           type: boolean
         benchmarkAccess:
           type: boolean
+        moduleAccess:
+          oneOf:
+            - $ref: "#/components/schemas/ModuleAccess"
+            - type: "null"
         packageStartedAt:
           type: ["string", "null"]
           format: date-time
@@ -991,6 +1635,10 @@ components:
           type: boolean
         benchmarkAccess:
           type: boolean
+        moduleAccess:
+          oneOf:
+            - $ref: "#/components/schemas/ModuleAccess"
+            - type: "null"
         packageStartedAt:
           type: ["string", "null"]
           format: date-time
@@ -1009,6 +1657,10 @@ components:
           type: boolean
         benchmarkAccess:
           type: boolean
+        moduleAccess:
+          oneOf:
+            - $ref: "#/components/schemas/ModuleAccess"
+            - type: "null"
         packageStartedAt:
           type: ["string", "null"]
           format: date-time

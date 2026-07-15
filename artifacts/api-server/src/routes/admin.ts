@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { and, desc, eq, ilike } from "drizzle-orm";
 import { db, accountsTable, accountHistoryTable, scenariosTable } from "@workspace/db";
+import { DEFAULT_MODULE_ACCESS_BY_TIER } from "@workspace/db";
 import {
   LoginAdminBody,
   LoginAdminResponse,
@@ -66,9 +67,8 @@ router.post("/admin/accounts", requireAdminAuth, async (req, res): Promise<void>
     return;
   }
 
-  const { email, businessName, tier, scenarioLimit, exportEnabled, benchmarkAccess, packageStartedAt, packageExpiresAt } = parsed.data;
+  const { email, businessName, tier, scenarioLimit, exportEnabled, benchmarkAccess, moduleAccess, packageStartedAt, packageExpiresAt } = parsed.data;
 
-  // Check for duplicate email
   const [existing] = await db
     .select()
     .from(accountsTable)
@@ -79,7 +79,9 @@ router.post("/admin/accounts", requireAdminAuth, async (req, res): Promise<void>
     return;
   }
 
-  // Create with a placeholder clerkUserId — will be linked on first login
+  const resolvedTier = (tier ?? "free") as keyof typeof DEFAULT_MODULE_ACCESS_BY_TIER;
+  const resolvedModuleAccess = moduleAccess ?? DEFAULT_MODULE_ACCESS_BY_TIER[resolvedTier];
+
   const placeholderClerkId = `admin_provisioned_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
   const [created] = await db
@@ -88,10 +90,11 @@ router.post("/admin/accounts", requireAdminAuth, async (req, res): Promise<void>
       clerkUserId: placeholderClerkId,
       email: email.toLowerCase().trim(),
       businessName: businessName ?? null,
-      tier: tier ?? "free",
+      tier: resolvedTier,
       scenarioLimit: scenarioLimit !== undefined ? scenarioLimit : 2,
       exportEnabled: exportEnabled ?? false,
       benchmarkAccess: benchmarkAccess ?? false,
+      moduleAccess: resolvedModuleAccess,
       packageStartedAt: packageStartedAt ? new Date(packageStartedAt) : null,
       packageExpiresAt: packageExpiresAt ? new Date(packageExpiresAt) : null,
     })
@@ -187,6 +190,12 @@ router.patch("/admin/accounts/:id", requireAdminAuth, async (req, res): Promise<
   }
 
   const { note, ...updateFields } = parsed.data;
+
+  // If tier changed and no explicit moduleAccess provided, apply tier defaults
+  if (updateFields.tier && updateFields.tier !== existing.tier && !updateFields.moduleAccess) {
+    const newTier = updateFields.tier as keyof typeof DEFAULT_MODULE_ACCESS_BY_TIER;
+    updateFields.moduleAccess = DEFAULT_MODULE_ACCESS_BY_TIER[newTier];
+  }
 
   const [updated] = await db
     .update(accountsTable)
