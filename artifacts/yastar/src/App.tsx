@@ -65,6 +65,9 @@ function AppRoutes() {
         <Route path="/sign-up"><Redirect to="/sign-in" /></Route>
         <Route path="/user-portal" component={UserPortalRoute} />
         <Route path="/admin" component={AdminGate} />
+        <Route path="/admin/dashboard" component={AdminGate} />
+        <Route path="/admin/akun" component={AdminGate} />
+        <Route path="/admin/cms" component={AdminGate} />
         <Route component={NotFound} />
       </Switch>
     </QueryClientProvider>
