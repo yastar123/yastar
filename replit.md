@@ -56,6 +56,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Setup status
 
+- Re-imported from GitHub on 2026-07-15: ran `pnpm install`, pushed DB schema, re-seeded demo accounts, set `ADMIN_PASSWORD` secret, and restarted both workflows — app verified working (landing page + `/admin` login).
 - Dependencies installed, DB schema pushed, demo accounts seeded via `pnpm --filter @workspace/scripts run seed`.
 - **Auth: Clerk removed.** Owner login uses email-only session cookie (`POST /api/owner/login`). No password required — account must exist in DB (provisioned by admin).
 - `ADMIN_PASSWORD` secret must be set in Replit Secrets — admin dashboard (`/admin`) uses this password.
