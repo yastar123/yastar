@@ -64,6 +64,7 @@ function AppRoutes() {
         <Route path="/sign-in" component={SignInPage} />
         <Route path="/sign-up"><Redirect to="/sign-in" /></Route>
         <Route path="/user-portal" component={UserPortalRoute} />
+        <Route path="/user-portal/:module" component={UserPortalRoute} />
         <Route path="/admin" component={AdminGate} />
         <Route path="/admin/dashboard" component={AdminGate} />
         <Route path="/admin/akun" component={AdminGate} />

@@ -1,87 +1,88 @@
-import { useState } from 'react';
-import { Redirect } from 'wouter';
-import { LogOut } from 'lucide-react';
+import { Redirect, useParams } from 'wouter';
 import { useGetMyAccount } from '@workspace/api-client-react';
 import { useOwnerAuth } from '@/lib/ownerAuth';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import SimulationHubPage from '@/pages/simulation-hub';
-import ScenariosPage from '@/pages/scenarios';
-import { TIER_LABELS } from '@/lib/format';
+import { useQueryClient } from '@tanstack/react-query';
+import PortalLayout from '@/components/portal-layout';
 
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+// Calculator pages
+import BerandaPage from '@/pages/beranda';
+import CalculatorPage from '@/pages/calculator';
+import HppCalculatorPage from '@/pages/hpp-calculator';
+import BepUsahaCalculatorPage from '@/pages/bep-usaha-calculator';
+import HargaJualCalculatorPage from '@/pages/harga-jual-calculator';
+import PajakCalculatorPage from '@/pages/pajak-calculator';
+import EkspansiCalculatorPage from '@/pages/ekspansi-calculator';
+import PinjamanCalculatorPage from '@/pages/pinjaman-calculator';
+import ScenariosPage from '@/pages/scenarios';
+
+const VALID_MODULES = new Set([
+  'beranda',
+  'target-mundur',
+  'hpp',
+  'bep-usaha',
+  'harga-jual',
+  'pajak',
+  'ekspansi',
+  'pinjaman',
+  'skenario',
+]);
 
 export default function UserPortalPage() {
-  const { session, logout } = useOwnerAuth();
-  const [tab, setTab] = useState('simulasi');
+  const { session } = useOwnerAuth();
+  const params = useParams<{ module?: string }>();
+  const module = params.module ?? 'beranda';
+  const qc = useQueryClient();
+
   const { data: account, refetch } = useGetMyAccount();
 
   if (!session?.authenticated) return <Redirect to="/" />;
 
-  const usageLabel = account
-    ? account.scenarioLimit === null
-      ? `${account.scenarioCount} skenario tersimpan`
-      : `${account.scenarioCount} / ${account.scenarioLimit} skenario`
-    : null;
+  // Default: redirect to beranda
+  if (!params.module) return <Redirect to="/user-portal/beranda" />;
+
+  // Unknown module → beranda
+  if (!VALID_MODULES.has(module)) return <Redirect to="/user-portal/beranda" />;
 
   const canSave = account
     ? account.scenarioLimit === null || account.scenarioCount < account.scenarioLimit
     : true;
 
-  return (
-    <div className="min-h-[100dvh] bg-background" data-testid="page-user-portal">
-      <header className="border-b border-border bg-card">
-        <div className="max-w-full mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={`${basePath}/logo.svg`} alt="Yastar" className="h-8 w-8 rounded-lg" />
-            <span className="font-bold tracking-tight">Yastar</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {account && (
-              <div className="hidden sm:flex items-center gap-2 text-sm">
-                <Badge variant="outline" data-testid="badge-account-tier">
-                  {TIER_LABELS[account.tier]}
-                </Badge>
-                <span className="text-muted-foreground" data-testid="text-scenario-usage">
-                  {usageLabel}
-                </span>
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => logout()}
-              data-testid="button-sign-out"
-            >
-              <LogOut className="h-4 w-4 mr-1.5" /> Keluar
-            </Button>
-          </div>
-        </div>
-      </header>
+  function onScenarioSaved() {
+    refetch();
+    qc.invalidateQueries({ queryKey: ['/api/scenarios'] });
+  }
 
-      <main className="max-w-full mx-auto px-4 py-8">
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="simulasi" data-testid="tab-simulasi">
-              Simulasi Bisnis
-            </TabsTrigger>
-            <TabsTrigger value="scenarios" data-testid="tab-scenarios">
-              Skenario Tersimpan
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="simulasi">
-            <SimulationHubPage
-              canSave={canSave}
-              account={account}
-              onScenarioSaved={() => refetch()}
-            />
-          </TabsContent>
-          <TabsContent value="scenarios">
-            <ScenariosPage />
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
+  return (
+    <PortalLayout activeModule={module} account={account}>
+      <div className="p-6 max-w-5xl mx-auto">
+        {module === 'beranda' && (
+          <BerandaPage account={account} />
+        )}
+        {module === 'target-mundur' && (
+          <CalculatorPage canSave={canSave} onScenarioSaved={onScenarioSaved} />
+        )}
+        {module === 'hpp' && (
+          <HppCalculatorPage canSave={canSave} onScenarioSaved={onScenarioSaved} />
+        )}
+        {module === 'bep-usaha' && (
+          <BepUsahaCalculatorPage canSave={canSave} onScenarioSaved={onScenarioSaved} />
+        )}
+        {module === 'harga-jual' && (
+          <HargaJualCalculatorPage canSave={canSave} onScenarioSaved={onScenarioSaved} />
+        )}
+        {module === 'pajak' && (
+          <PajakCalculatorPage canSave={canSave} onScenarioSaved={onScenarioSaved} />
+        )}
+        {module === 'ekspansi' && (
+          <EkspansiCalculatorPage canSave={canSave} onScenarioSaved={onScenarioSaved} />
+        )}
+        {module === 'pinjaman' && (
+          <PinjamanCalculatorPage canSave={canSave} onScenarioSaved={onScenarioSaved} />
+        )}
+        {module === 'skenario' && (
+          <ScenariosPage />
+        )}
+      </div>
+    </PortalLayout>
   );
 }
