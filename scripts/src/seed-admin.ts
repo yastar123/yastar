@@ -1,41 +1,55 @@
 /**
- * Admin credentials seeder.
+ * Admin environment validator.
  *
- * The Yastar internal admin dashboard is protected by a single shared
- * password stored as the ADMIN_PASSWORD environment secret. There is no
- * database row for the admin — authentication is purely secret-based.
+ * The Yastar internal admin dashboard (/admin) is protected by the
+ * ADMIN_PASSWORD environment secret. There is no database row for the admin —
+ * authentication is purely secret-based.
  *
- * Admin credentials
- * -----------------
- *   URL    : /admin
- *   Email  : (tidak diperlukan — login hanya dengan kata sandi)
- *   Password: yastar-admin-2024
+ * This script validates that the required secrets are in place before you
+ * launch the app, so you catch missing config early rather than at runtime.
  *
- * Cara penggunaan:
- *   1. Pastikan secret ADMIN_PASSWORD sudah diset ke nilai di atas di
- *      Replit Secrets (atau ubah sesuai kebutuhan).
- *   2. Buka /admin di browser untuk masuk ke dashboard admin.
- *   3. Dari dashboard admin, buat akun pengguna baru dengan email
- *      pelanggan dan atur paket/tier sesuai langganan mereka.
- *
- * Jalankan script ini hanya untuk mencetak pengingat kredensial:
+ * Usage:
  *   pnpm --filter @workspace/scripts run seed:admin
+ *
+ * How to create owner accounts:
+ *   1. Set ADMIN_PASSWORD in Replit Secrets (a strong, unique password of
+ *      your choosing — never commit it to source code).
+ *   2. Open /admin in the browser and log in with that password.
+ *   3. Click "Buat Akun" to create a subscriber account by email and tier.
+ *   4. Share the app URL and the registered email with the subscriber — they
+ *      log in at /sign-in and the DB record auto-links on first login.
  */
 
-console.log('');
-console.log('╔══════════════════════════════════════════════╗');
-console.log('║         YASTAR — ADMIN CREDENTIALS          ║');
-console.log('╠══════════════════════════════════════════════╣');
-console.log('║  URL      : /admin                          ║');
-console.log('║  Password : yastar-admin-2024               ║');
-console.log('╠══════════════════════════════════════════════╣');
-console.log('║  Pastikan ADMIN_PASSWORD secret sudah diset ║');
-console.log('║  ke nilai di atas di Replit Secrets.        ║');
-console.log('╚══════════════════════════════════════════════╝');
-console.log('');
-console.log('Cara membuat akun pengguna baru:');
-console.log('  1. Login ke /admin dengan password di atas');
-console.log('  2. Akun pelanggan dibuat dari dashboard admin');
-console.log('  3. Pengguna login pertama kali dengan email mereka');
-console.log('     — akun akan otomatis terhubung ke record DB.');
-console.log('');
+const missing: string[] = [];
+
+const required = [
+  "ADMIN_PASSWORD",
+  "DATABASE_URL",
+  "CLERK_SECRET_KEY",
+  "CLERK_PUBLISHABLE_KEY",
+];
+
+for (const key of required) {
+  if (!process.env[key]) {
+    missing.push(key);
+  }
+}
+
+if (missing.length > 0) {
+  console.error("❌  Missing required environment secrets:");
+  for (const key of missing) {
+    console.error(`    - ${key}`);
+  }
+  console.error(
+    "\nSet these in Replit Secrets before starting the application.",
+  );
+  process.exitCode = 1;
+} else {
+  console.log("✔  All required environment secrets are set.");
+  console.log(
+    "\nAdmin dashboard: open /admin and log in with the ADMIN_PASSWORD secret.",
+  );
+  console.log(
+    "Create subscriber accounts from the dashboard — no database seeding required.",
+  );
+}

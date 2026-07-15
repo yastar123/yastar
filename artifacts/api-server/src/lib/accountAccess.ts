@@ -10,8 +10,12 @@ const DEFAULT_FREE_SCENARIO_LIMIT = 2;
  * provisioning). New accounts start on the free tier.
  *
  * If the admin has pre-created an account with the same email (with a
- * placeholder clerkUserId), we link it to the real Clerk user on first login
- * so tier/limits set by the admin are preserved.
+ * placeholder clerkUserId that starts with "admin_provisioned_"), we link it
+ * to the real Clerk user on first login so the tier/limits the admin set are
+ * preserved.
+ *
+ * Email comparison is always case-insensitive: both the stored value and the
+ * Clerk-supplied value are normalised to lowercase before any lookup or insert.
  */
 export async function getOrCreateAccount(clerkUserId: string): Promise<Account> {
   // 1. Fast path: existing account keyed by Clerk user ID.
@@ -24,12 +28,14 @@ export async function getOrCreateAccount(clerkUserId: string): Promise<Account> 
     return existing;
   }
 
-  // 2. Fetch Clerk user details to get the primary email.
+  // 2. Fetch Clerk user details to get the primary email (normalised).
   const user = await clerkClient.users.getUser(clerkUserId);
   const primaryEmail = user.emailAddresses.find(
     (address) => address.id === user.primaryEmailAddressId,
   );
-  const email = primaryEmail?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? "";
+  const rawEmail =
+    primaryEmail?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? "";
+  const email = rawEmail.toLowerCase().trim();
 
   // 3. Admin may have pre-created a DB row by email (placeholder clerkUserId
   //    starts with "admin_provisioned_"). Link it to the real Clerk user.
@@ -37,7 +43,7 @@ export async function getOrCreateAccount(clerkUserId: string): Promise<Account> 
     const [preCreated] = await db
       .select()
       .from(accountsTable)
-      .where(eq(accountsTable.email, email));
+      .where(eq(accountsTable.email, email)); // stored value already lowercased at insert
 
     if (preCreated && preCreated.clerkUserId.startsWith("admin_provisioned_")) {
       const [linked] = await db
