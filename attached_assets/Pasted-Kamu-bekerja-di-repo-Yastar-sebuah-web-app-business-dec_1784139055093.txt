@@ -1,0 +1,224 @@
+Kamu bekerja di repo Yastar — sebuah web app business decision software untuk pemilik usaha kecil di Indonesia. Saat ini produk hanya punya satu modul kalkulator: Target Mundur (input target profit → hitung mundur jumlah klien dibutuhkan). Stack yang sudah dipakai:
+
+Baca dulu prd.md di root repo untuk memahami arsitektur, skema database (accounts, scenarios, account_history), dan auth flow (owner via email+password scrypt, admin via password env) sebelum mengubah apa pun. Jangan ubah pola auth, session handling, atau struktur admin yang sudah ada — perubahan ini murni menambah modul baru dan restrukturisasi tier, bukan rombak fondasi.
+
+Tujuan Perubahan
+
+Ubah Yastar dari "kalkulator target mundur untuk salon" menjadi hub simulasi bisnis dengan beberapa modul kalkulasi, di mana modul yang sudah ada (Target Mundur) menjadi salah satu dari beberapa modul, bukan satu-satunya fitur.
+
+Scope Pekerjaan
+
+Kerjakan dalam urutan fase berikut. Setiap fase harus selesai dan bisa di-build/test sebelum lanjut ke fase berikutnya.
+
+FASE 1 — Rename & Restrukturisasi Navigasi (tanpa fitur baru dulu)
+
+
+Ubah nama tab di User Portal dari Kalkulator menjadi Simulasi Bisnis — ini jadi hub/landing tab yang menampilkan card-card modul (bukan langsung form kalkulator).
+Card modul yang tersedia saat ini hanya satu: "Target Profit → Klien" (dulu "Kalkulator Target Mundur"). Card ini klik → masuk ke form yang sudah ada sekarang, tidak diubah logikanya.
+Tab Skenario Tersimpan tetap ada, tapi siapkan kolom filter/grouping by module type — walau untuk saat ini isinya cuma satu jenis skenario.
+Di tabel scenarios, tambahkan kolom baru:
+
+
+FASE 2 — Modul Baru: Hitung HPP (Cost of Goods Sold)
+
+Tambah modul baru dengan dua mode: Produk (retail/F&B) dan Jasa (servis/layanan).
+
+Form input — Mode Produk:
+
+FieldTipeNama produkTextDaftar bahan baku (nama, qty, harga satuan)List repeatableBiaya tenaga kerja langsung per unitCurrencyBiaya overhead produksi bulanan (untuk dialokasikan)CurrencyEstimasi jumlah unit diproduksi/bulanNumberBiaya kemasan per unitCurrency
+
+Form input — Mode Jasa:
+
+FieldTipeNama layananTextBahan habis pakai per sesi (list: nama, qty, harga)List repeatableBiaya tetap bulanan (sewa, listrik, dll)CurrencyEstimasi jumlah sesi/bulan (untuk alokasi biaya tetap)NumberKomisi/gaji terapis per sesiCurrency
+
+Formula:
+
+// Mode Produk
+overheadPerUnit = biayaOverheadBulanan / estimasiUnitPerBulan
+HPP = totalBahanBaku + biayaTenagaKerjaLangsung + overheadPerUnit + biayaKemasan
+
+// Mode Jasa
+alokasiBiayaTetap = biayaTetapBulanan / estimasiSesiPerBulan
+HPP = totalBahanHabisPakai + alokasiBiayaTetap + komisiPerSesi
+
+Output:
+
+
+HPP per unit/sesi
+Jika owner sudah input harga jual → tampilkan margin (%) dan markup (%)
+Ranking (jika owner input >1 produk/layanan dalam satu sesi kerja) — mana yang margin-nya paling tipis
+
+
+Integrasi penting: hasil HPP dari modul ini harus bisa direferensikan oleh modul lain (Target Mundur, BEP Usaha) tanpa perlu diinput ulang manual. Implementasikan sebagai:
+
+
+Tabel baru cost_items (accountId FK, nama, tipe produk/jasa, input jsonb, hppResult jsonb, createdAt, updatedAt)
+Endpoint GET /api/cost-items dan POST /api/cost-items
+Di form modul lain, sediakan opsi "Pilih dari HPP tersimpan" selain input manual
+
+
+Endpoint baru: POST /api/calculate/hpp
+
+Rules-based insight baru untuk modul ini:
+
+KodeKondisiSeveritasmargin_thin_productmargin < 15%warningmargin_negativeharga jual < HPPdangeroverhead_allocation_highalokasi overhead > 30% dari HPPwarning
+
+
+FASE 3 — Modul Baru: Titik Impas Usaha (BEP Usaha)
+
+Beda dari BEP karyawan (kalkulator break-even kapster baru yang sudah ada) — ini level bisnis keseluruhan.
+
+Input:
+
+
+Total biaya tetap bulanan
+Harga jual rata-rata per unit/sesi (atau ambil dari HPP tersimpan)
+HPP per unit/sesi (atau ambil dari HPP tersimpan)
+
+
+Formula:
+
+kontribusiMarginPerUnit = hargaJual - HPP
+unitBEPBulanan = ceil(biayaTetapBulanan / kontribusiMarginPerUnit)
+revenueBEPBulanan = unitBEPBulanan × hargaJual
+
+Output: unit BEP/bulan, revenue BEP/bulan, insight jika target penjualan owner di bawah/di atas BEP.
+
+Endpoint baru: POST /api/calculate/bep-usaha
+
+
+FASE 4 — Modul Baru: Uji Harga Jual & Margin
+
+Dua arah kalkulasi (toggle):
+
+
+Dari HPP + target margin/markup → hitung harga jual yang harus ditetapkan
+Dari harga jual (misal harga kompetitor) + HPP → hitung margin aktual
+
+
+// Arah 1
+hargaJual = HPP / (1 - targetMarginPercent) // margin-based
+hargaJual = HPP × (1 + targetMarkupPercent) // markup-based
+
+// Arah 2
+marginAktual = (hargaJual - HPP) / hargaJual × 100
+
+Endpoint baru: POST /api/calculate/harga-jual
+
+
+FASE 5 — Modul Baru: Kelayakan Cabang Baru (Ekspansi)
+
+Input:
+
+
+Modal awal cabang baru (sewa deposit, renovasi, peralatan, dll)
+Proyeksi revenue bulanan cabang baru
+Proyeksi biaya tetap bulanan cabang baru
+HPP rata-rata (atau ambil dari HPP tersimpan)
+
+
+Formula:
+
+profitBulananProyeksi = (revenueBulanan × (1 - hppPercentOfRevenue)) - biayaTetapBulanan
+paybackPeriodBulan = modalAwal / profitBulananProyeksi
+roiTahunan = (profitBulananProyeksi × 12 / modalAwal) × 100
+
+Output: payback period (bulan/tahun), ROI tahunan (%), insight kelayakan (mis. "payback > 36 bulan = risiko tinggi").
+
+Endpoint baru: POST /api/calculate/ekspansi
+
+
+FASE 6 — Modul Baru: Simulasi Pinjaman Modal
+
+Input:
+
+
+Plafon pinjaman
+Suku bunga per tahun (%)
+Tenor (bulan)
+Metode: Flat / Anuitas (menu select)
+
+
+Formula (anuitas):
+
+bungaPerBulan = sukuBungaTahunan / 12 / 100
+cicilanBulanan = plafon × bungaPerBulan / (1 - (1 + bungaPerBulan)^-tenorBulan)
+
+Formula (flat):
+
+cicilanPokok = plafon / tenorBulan
+bungaBulanan = (plafon × sukuBungaTahunan / 100) / 12
+cicilanBulanan = cicilanPokok + bungaBulanan
+
+Output: cicilan bulanan, total bunga dibayar, dampak ke margin bulanan usaha (jika owner input profit bulanan saat ini) — tampilkan "profit setelah cicilan".
+
+Endpoint baru: POST /api/calculate/pinjaman
+
+
+FASE 7 — Modul Baru: Estimasi Pajak UMKM
+
+Input:
+
+
+Omzet bulanan
+Skema: PPh Final 0.5% (PP 23/2018) atau Normal (PPh Pasal 17)
+
+
+Formula sederhana:
+
+// PPh Final
+pajakBulanan = omzetBulanan × 0.005
+
+// Normal (simplified, bukan pengganti konsultasi pajak resmi)
+labaKenaPajak = omzetBulanan - totalBiaya
+pajakBulanan = hitung berdasarkan tarif progresif PPh 17 (perlu tabel bracket terbaru, cek sumber resmi)
+
+PENTING: tampilkan disclaimer jelas di UI — "Estimasi ini bersifat umum dan bukan pengganti konsultasi dengan konsultan pajak resmi." Jangan generate angka final tanpa disclaimer.
+
+Endpoint baru: POST /api/calculate/pajak
+
+
+FASE 8 — Restrukturisasi Tier & Pricing
+
+Update tabel accounts dan logic pembatasan akses per modul, bukan cuma jumlah skenario.
+
+
+Tambah kolom di tabel accounts:
+
+
+sql ALTER TABLE accounts ADD COLUMN moduleAccess JSONB DEFAULT '{"target_mundur":true,"hpp":true,"harga_jual":false,"bep_usaha":false,"ekspansi":false,"pinjaman":false,"pajak":false}';
+
+
+Middleware baru requireModuleAccess(moduleType) yang mengecek moduleAccess sebelum mengizinkan akses ke endpoint kalkulasi/simpan skenario modul tersebut.
+Struktur tier baru (update seed data & admin panel select options):
+FiturGratisStarterProfessionalSkenario tersimpan215UnlimitedTarget Profit → Klien✓✓✓Hitung HPP✓ (1 item)✓ (unlimited)✓Uji Harga Jual✗✓✓Titik Impas Usaha✗✓✓Estimasi Pajak✗✓✓Kelayakan Cabang Baru✗✗✓Simulasi Pinjaman✗✗✓Export PDF✗✓✓Benchmark industri✗✗✓
+
+
+Update halaman /admin/akun — detail akun perlu UI checkbox/toggle per modul, bukan cuma tier select (supaya admin bisa override akses per akun kalau perlu, misal promo).
+Update landing page pricing table agar menampilkan modul sebagai baris fitur, dikelompokkan terpisah dari "batasan" (skenario/export/benchmark).
+
+
+
+Non-Tujuan (Jangan Kerjakan)
+
+
+Jangan bikin payment gateway otomatis — tetap manual via WhatsApp admin, hanya update tier via /admin/akun.
+Jangan tambahkan AI/LLM untuk logika kalkulasi inti — semua modul di atas rules-based/formula matematis murni, bukan model AI.
+Jangan ubah sistem auth existing (scrypt, HMAC session).
+Jangan bikin POS, booking, atau pencatatan transaksi harian.
+Jangan hapus atau ubah behavior modul Target Mundur / BEP Karyawan yang sudah berjalan — hanya tambahkan modul baru di sampingnya.
+
+
+Catatan Teknis Tambahan
+
+
+Semua endpoint kalkulasi baru stateless — hanya hitung dan kembalikan hasil, tidak otomatis simpan ke database kecuali user klik "Simpan Skenario" (pola yang sama dengan modul existing).
+Update OpenAPI spec dulu sebelum implementasi endpoint, lalu jalankan Orval codegen supaya @workspace/api-client-react ter-generate ulang.
+Tulis unit test untuk setiap formula kalkulasi (terutama BEP, HPP, dan pinjaman anuitas — rawan salah rounding).
+Setiap modul baru butuh komponen input reusable mengikuti pola CurrencyInput, ServiceListInput yang sudah ada — jangan bikin pattern baru yang tidak konsisten dengan komponen existing.
+Setelah tiap fase selesai, jalankan build & smoke test (login owner, akses tiap tab, submit satu kalkulasi per modul) sebelum lanjut fase berikutnya.
+
+
+Prioritas Eksekusi
+
+Jika waktu terbatas, urutan prioritas: Fase 1 → Fase 2 (HPP) → Fase 8 (tier) → Fase 3 (BEP Usaha) → Fase 4 (Harga Jual) → Fase 7 (Pajak) → Fase 5 (Ekspansi) → Fase 6 (Pinjaman). HPP dan restrukturisasi tier adalah fondasi paling bernilai karena modul lain akan mereferensikan HPP dan tier baru butuh sesuatu untuk dibedakan.
