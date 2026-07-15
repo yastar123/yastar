@@ -89,7 +89,7 @@ router.post("/admin/accounts", requireAdminAuth, async (req, res): Promise<void>
       email: email.toLowerCase().trim(),
       businessName: businessName ?? null,
       tier: tier ?? "free",
-      scenarioLimit: scenarioLimit ?? 2,
+      scenarioLimit: scenarioLimit !== undefined ? scenarioLimit : 2,
       exportEnabled: exportEnabled ?? false,
       benchmarkAccess: benchmarkAccess ?? false,
       packageStartedAt: packageStartedAt ? new Date(packageStartedAt) : null,
