@@ -24,6 +24,7 @@ import type {
   AdminAccountDetail,
   AdminAccountSummary,
   AdminAccountUpdate,
+  AdminCreateAccountInput,
   AdminLoginInput,
   AdminSession,
   BreakEvenInput,
@@ -948,6 +949,77 @@ export function useGetAdminSession<TData = Awaited<ReturnType<typeof getAdminSes
 
 
 
+
+export const getCreateAdminAccountUrl = () => {
+
+
+
+
+  return `/api/admin/accounts`
+}
+
+/**
+ * @summary Create a new owner account (admin only)
+ */
+export const createAdminAccount = async (adminCreateAccountInput: AdminCreateAccountInput, options?: RequestInit): Promise<AdminAccountDetail> => {
+
+  return customFetch<AdminAccountDetail>(getCreateAdminAccountUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminCreateAccountInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminAccountMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminAccount>>, TError,{data: BodyType<AdminCreateAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminAccount>>, TError,{data: BodyType<AdminCreateAccountInput>}, TContext> => {
+
+const mutationKey = ['createAdminAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminAccount>>, {data: BodyType<AdminCreateAccountInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminAccount(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminAccountMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminAccount>>>
+    export type CreateAdminAccountMutationBody = BodyType<AdminCreateAccountInput>
+    export type CreateAdminAccountMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create a new owner account (admin only)
+ */
+export const useCreateAdminAccount = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminAccount>>, TError,{data: BodyType<AdminCreateAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminAccount>>,
+        TError,
+        {data: BodyType<AdminCreateAccountInput>},
+        TContext
+      > => {
+      return useMutation(getCreateAdminAccountMutationOptions(options));
+    }
 
 export const getListAdminAccountsUrl = (params?: ListAdminAccountsParams,) => {
   const normalizedParams = new URLSearchParams();

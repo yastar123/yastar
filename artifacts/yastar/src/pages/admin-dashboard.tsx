@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { LogOut, Search } from 'lucide-react';
+import { LogOut, Plus, Search, X } from 'lucide-react';
 import {
   getGetAdminAccountQueryKey,
+  useCreateAdminAccount,
   useGetAdminAccount,
   useListAdminAccounts,
   useLogoutAdmin,
@@ -14,6 +15,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -35,6 +43,7 @@ import { formatDate, TIER_LABELS } from '@/lib/format';
 export default function AdminDashboardPage({ onSignedOut }: { onSignedOut: () => void }) {
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -82,7 +91,12 @@ export default function AdminDashboardPage({ onSignedOut }: { onSignedOut: () =>
       <main className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Akun Pemilik Usaha</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Akun Pemilik Usaha</CardTitle>
+              <Button size="sm" onClick={() => setShowCreateDialog(true)} data-testid="button-create-account">
+                <Plus className="h-4 w-4 mr-1.5" /> Buat Akun
+              </Button>
+            </div>
             <div className="relative mt-2">
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -233,6 +247,146 @@ export default function AdminDashboardPage({ onSignedOut }: { onSignedOut: () =>
           </CardContent>
         </Card>
       </main>
+
+      <CreateAccountDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onCreated={(id) => {
+          refetchList();
+          setSelectedId(id);
+          setShowCreateDialog(false);
+        }}
+      />
     </div>
+  );
+}
+
+function CreateAccountDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onCreated: (id: number) => void;
+}) {
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [tier, setTier] = useState<Tier>('free');
+  const [scenarioLimit, setScenarioLimit] = useState<string>('2');
+  const [expiresAt, setExpiresAt] = useState('');
+
+  const createAccount = useCreateAdminAccount({
+    mutation: {
+      onSuccess: (data) => {
+        toast({ title: `Akun ${data.email} berhasil dibuat` });
+        onCreated(data.id);
+        // Reset form
+        setEmail('');
+        setBusinessName('');
+        setTier('free');
+        setScenarioLimit('2');
+        setExpiresAt('');
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+          ?? 'Gagal membuat akun';
+        toast({ title: msg, variant: 'destructive' });
+      },
+    },
+  });
+
+  function handleSubmit() {
+    if (!email.trim()) return;
+    createAccount.mutate({
+      data: {
+        email: email.trim(),
+        businessName: businessName.trim() || null,
+        tier,
+        scenarioLimit: scenarioLimit === '' ? null : Number(scenarioLimit),
+        exportEnabled: tier !== 'free',
+        benchmarkAccess: tier === 'professional',
+        packageExpiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+        packageStartedAt: expiresAt ? new Date().toISOString() : null,
+      },
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md" data-testid="dialog-create-account">
+        <DialogHeader>
+          <DialogTitle>Buat Akun Pelanggan Baru</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 py-2">
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">Email <span className="text-destructive">*</span></Label>
+            <Input
+              type="email"
+              placeholder="owner@salon.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              data-testid="input-create-email"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">Nama Usaha</Label>
+            <Input
+              placeholder="Salon Cantik Jakarta"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              data-testid="input-create-business-name"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">Paket</Label>
+            <Select value={tier} onValueChange={(v) => setTier(v as Tier)}>
+              <SelectTrigger data-testid="select-create-tier">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(TIER_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">Batas Skenario (kosongkan = tanpa batas)</Label>
+            <Input
+              type="number"
+              min={0}
+              value={scenarioLimit}
+              onChange={(e) => setScenarioLimit(e.target.value)}
+              placeholder="Tanpa batas"
+              data-testid="input-create-scenario-limit"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs">Tanggal Kadaluarsa Paket</Label>
+            <Input
+              type="date"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+              data-testid="input-create-expires-at"
+            />
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <X className="h-4 w-4 mr-1.5" /> Batal
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!email.trim() || createAccount.isPending}
+            data-testid="button-confirm-create-account"
+          >
+            {createAccount.isPending ? 'Menyimpan...' : 'Buat Akun'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

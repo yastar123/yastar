@@ -610,6 +610,48 @@ export const GetAdminSessionResponse = zod.object({
 
 
 /**
+ * @summary Create a new owner account (admin only)
+ */
+export const createAdminAccountBodyEmailMin = 3;
+
+
+
+export const CreateAdminAccountBody = zod.object({
+  "email": zod.string().min(createAdminAccountBodyEmailMin),
+  "businessName": zod.string().nullish(),
+  "tier": zod.enum(['free', 'starter', 'professional']),
+  "scenarioLimit": zod.number().nullish(),
+  "exportEnabled": zod.boolean().optional(),
+  "benchmarkAccess": zod.boolean().optional(),
+  "packageStartedAt": zod.coerce.date().nullish(),
+  "packageExpiresAt": zod.coerce.date().nullish()
+})
+
+export const CreateAdminAccountResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "businessName": zod.string().nullable(),
+  "tier": zod.enum(['free', 'starter', 'professional']),
+  "scenarioCount": zod.number(),
+  "scenarioLimit": zod.number().nullable(),
+  "exportEnabled": zod.boolean(),
+  "benchmarkAccess": zod.boolean(),
+  "packageStartedAt": zod.coerce.date().nullable(),
+  "packageExpiresAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "history": zod.array(zod.object({
+  "id": zod.number(),
+  "previousTier": zod.enum(['free', 'starter', 'professional']),
+  "newTier": zod.enum(['free', 'starter', 'professional']),
+  "previousExpiresAt": zod.coerce.date().nullable(),
+  "newExpiresAt": zod.coerce.date().nullable(),
+  "note": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
  * @summary Search owner accounts by email (admin only)
  */
 export const ListAdminAccountsQueryParams = zod.object({

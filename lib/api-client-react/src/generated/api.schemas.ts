@@ -310,6 +310,22 @@ export interface AdminAccountDetail {
   history: AdminHistoryEntry[];
 }
 
+export interface AdminCreateAccountInput {
+  /** @minLength 3 */
+  email: string;
+  /** @nullable */
+  businessName?: string | null;
+  tier: Tier;
+  /** @nullable */
+  scenarioLimit?: number | null;
+  exportEnabled?: boolean;
+  benchmarkAccess?: boolean;
+  /** @nullable */
+  packageStartedAt?: string | null;
+  /** @nullable */
+  packageExpiresAt?: string | null;
+}
+
 export interface AdminAccountUpdate {
   tier?: Tier;
   /** @nullable */

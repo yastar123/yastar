@@ -8,8 +8,13 @@ const DEFAULT_FREE_SCENARIO_LIMIT = 2;
 /**
  * Loads the account for a Clerk user, creating one on first sight (JIT
  * provisioning). New accounts start on the free tier.
+ *
+ * If the admin has pre-created an account with the same email (with a
+ * placeholder clerkUserId), we link it to the real Clerk user on first login
+ * so tier/limits set by the admin are preserved.
  */
 export async function getOrCreateAccount(clerkUserId: string): Promise<Account> {
+  // 1. Fast path: existing account keyed by Clerk user ID.
   const [existing] = await db
     .select()
     .from(accountsTable)
@@ -19,12 +24,35 @@ export async function getOrCreateAccount(clerkUserId: string): Promise<Account> 
     return existing;
   }
 
+  // 2. Fetch Clerk user details to get the primary email.
   const user = await clerkClient.users.getUser(clerkUserId);
   const primaryEmail = user.emailAddresses.find(
     (address) => address.id === user.primaryEmailAddressId,
   );
   const email = primaryEmail?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? "";
 
+  // 3. Admin may have pre-created a DB row by email (placeholder clerkUserId
+  //    starts with "admin_provisioned_"). Link it to the real Clerk user.
+  if (email) {
+    const [preCreated] = await db
+      .select()
+      .from(accountsTable)
+      .where(eq(accountsTable.email, email));
+
+    if (preCreated && preCreated.clerkUserId.startsWith("admin_provisioned_")) {
+      const [linked] = await db
+        .update(accountsTable)
+        .set({ clerkUserId })
+        .where(eq(accountsTable.id, preCreated.id))
+        .returning();
+      if (linked) {
+        logger.info({ accountId: linked.id }, "Linked pre-provisioned account to Clerk user");
+        return linked;
+      }
+    }
+  }
+
+  // 4. No match — create a fresh free-tier account.
   const [created] = await db
     .insert(accountsTable)
     .values({

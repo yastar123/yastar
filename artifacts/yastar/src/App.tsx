@@ -10,7 +10,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { queryClient } from '@/lib/queryClient';
 import HomePage from '@/pages/home';
 import SignInPage from '@/pages/sign-in';
-import SignUpPage from '@/pages/sign-up';
 import UserPortalPage from '@/pages/user-portal';
 import AdminLoginPage from '@/pages/admin-login';
 import AdminDashboardPage from '@/pages/admin-dashboard';
@@ -157,18 +156,11 @@ function ClerkProviderWithRoutes() {
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
       localization={{
         signIn: {
           start: {
             title: 'Selamat datang kembali',
             subtitle: 'Masuk untuk mengakses kalkulatormu',
-          },
-        },
-        signUp: {
-          start: {
-            title: 'Buat akun Yastar',
-            subtitle: 'Mulai hitung target bisnismu hari ini',
           },
         },
       }}
@@ -180,7 +172,7 @@ function ClerkProviderWithRoutes() {
         <Switch>
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
-          <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/sign-up/*?"><Redirect to="/sign-in" /></Route>
           <Route path="/user-portal" component={UserPortalRoute} />
           <Route path="/admin" component={AdminGate} />
           <Route component={NotFound} />

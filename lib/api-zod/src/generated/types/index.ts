@@ -10,6 +10,7 @@ export * from './account';
 export * from './adminAccountDetail';
 export * from './adminAccountSummary';
 export * from './adminAccountUpdate';
+export * from './adminCreateAccountInput';
 export * from './adminHistoryEntry';
 export * from './adminLoginInput';
 export * from './adminSession';

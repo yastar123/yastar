@@ -309,6 +309,41 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
   /admin/accounts:
+    post:
+      operationId: createAdminAccount
+      tags: [admin]
+      summary: Create a new owner account (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminCreateAccountInput"
+      responses:
+        "201":
+          description: Created account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAccountDetail"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated as admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     get:
       operationId: listAdminAccounts
       tags: [admin]
@@ -938,6 +973,30 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminHistoryEntry"
+
+    AdminCreateAccountInput:
+      type: object
+      required: [email, tier]
+      properties:
+        email:
+          type: string
+          minLength: 3
+        businessName:
+          type: ["string", "null"]
+        tier:
+          $ref: "#/components/schemas/Tier"
+        scenarioLimit:
+          type: ["integer", "null"]
+        exportEnabled:
+          type: boolean
+        benchmarkAccess:
+          type: boolean
+        packageStartedAt:
+          type: ["string", "null"]
+          format: date-time
+        packageExpiresAt:
+          type: ["string", "null"]
+          format: date-time
 
     AdminAccountUpdate:
       type: object

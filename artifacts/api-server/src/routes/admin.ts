@@ -12,6 +12,8 @@ import {
   UpdateAdminAccountParams,
   UpdateAdminAccountBody,
   UpdateAdminAccountResponse,
+  CreateAdminAccountBody,
+  CreateAdminAccountResponse,
 } from "@workspace/api-zod";
 import {
   issueAdminSession,
@@ -54,6 +56,58 @@ router.post("/admin/logout", requireAdminAuth, async (_req, res): Promise<void> 
 router.get("/admin/session", async (req, res): Promise<void> => {
   res.json(
     GetAdminSessionResponse.parse({ authenticated: isAdminAuthenticated(req) }),
+  );
+});
+
+router.post("/admin/accounts", requireAdminAuth, async (req, res): Promise<void> => {
+  const parsed = CreateAdminAccountBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { email, businessName, tier, scenarioLimit, exportEnabled, benchmarkAccess, packageStartedAt, packageExpiresAt } = parsed.data;
+
+  // Check for duplicate email
+  const [existing] = await db
+    .select()
+    .from(accountsTable)
+    .where(ilike(accountsTable.email, email));
+
+  if (existing) {
+    res.status(409).json({ error: "Akun dengan email ini sudah ada" });
+    return;
+  }
+
+  // Create with a placeholder clerkUserId — will be linked on first login
+  const placeholderClerkId = `admin_provisioned_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const [created] = await db
+    .insert(accountsTable)
+    .values({
+      clerkUserId: placeholderClerkId,
+      email: email.toLowerCase().trim(),
+      businessName: businessName ?? null,
+      tier: tier ?? "free",
+      scenarioLimit: scenarioLimit ?? 2,
+      exportEnabled: exportEnabled ?? false,
+      benchmarkAccess: benchmarkAccess ?? false,
+      packageStartedAt: packageStartedAt ? new Date(packageStartedAt) : null,
+      packageExpiresAt: packageExpiresAt ? new Date(packageExpiresAt) : null,
+    })
+    .returning();
+
+  if (!created) {
+    res.status(500).json({ error: "Gagal membuat akun" });
+    return;
+  }
+
+  res.status(201).json(
+    CreateAdminAccountResponse.parse({
+      ...created,
+      scenarioCount: 0,
+      history: [],
+    }),
   );
 });
 
