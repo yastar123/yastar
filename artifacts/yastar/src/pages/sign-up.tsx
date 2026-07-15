@@ -1,12 +1,6 @@
-import { SignUp } from '@clerk/react';
-import { AuthSplitLayout } from '@/components/auth-split-layout';
+import { Redirect } from 'wouter';
 
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-
+// Sign-up is admin-provisioned; redirect to sign-in.
 export default function SignUpPage() {
-  return (
-    <AuthSplitLayout testId="page-sign-up">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
-    </AuthSplitLayout>
-  );
+  return <Redirect to="/sign-in" />;
 }

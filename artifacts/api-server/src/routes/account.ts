@@ -1,14 +1,12 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
 import { GetMyAccountResponse } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth";
-import { getOrCreateAccount, getScenarioCount } from "../lib/accountAccess";
+import { getAccountById, getScenarioCount } from "../lib/accountAccess";
 
 const router: IRouter = Router();
 
 router.get("/me", requireAuth, async (req, res): Promise<void> => {
-  const { userId } = getAuth(req);
-  const account = await getOrCreateAccount(userId!);
+  const account = await getAccountById(req.accountId!);
   const scenarioCount = await getScenarioCount(account.id);
 
   res.json(

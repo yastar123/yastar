@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
 import { and, desc, eq } from "drizzle-orm";
-import { getAuth } from "@clerk/express";
 import { db, scenariosTable } from "@workspace/db";
 import {
   CreateScenarioBody,
@@ -14,7 +13,7 @@ import {
   DeleteScenarioParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth";
-import { getOrCreateAccount, getScenarioCount } from "../lib/accountAccess";
+import { getAccountById, getScenarioCount } from "../lib/accountAccess";
 import { calculateReverseTarget } from "../lib/calculationEngine";
 
 const router: IRouter = Router();
@@ -22,8 +21,7 @@ const router: IRouter = Router();
 router.use("/scenarios", requireAuth);
 
 router.get("/scenarios", async (req, res): Promise<void> => {
-  const { userId } = getAuth(req);
-  const account = await getOrCreateAccount(userId!);
+  const account = await getAccountById(req.accountId!);
 
   const rows = await db
     .select()
@@ -35,8 +33,7 @@ router.get("/scenarios", async (req, res): Promise<void> => {
 });
 
 router.post("/scenarios", async (req, res): Promise<void> => {
-  const { userId } = getAuth(req);
-  const account = await getOrCreateAccount(userId!);
+  const account = await getAccountById(req.accountId!);
 
   const parsed = CreateScenarioBody.safeParse(req.body);
   if (!parsed.success) {
@@ -79,8 +76,7 @@ router.post("/scenarios", async (req, res): Promise<void> => {
 });
 
 router.get("/scenarios/:id", async (req, res): Promise<void> => {
-  const { userId } = getAuth(req);
-  const account = await getOrCreateAccount(userId!);
+  const account = await getAccountById(req.accountId!);
 
   const params = GetScenarioParams.safeParse(req.params);
   if (!params.success) {
@@ -107,8 +103,7 @@ router.get("/scenarios/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/scenarios/:id", async (req, res): Promise<void> => {
-  const { userId } = getAuth(req);
-  const account = await getOrCreateAccount(userId!);
+  const account = await getAccountById(req.accountId!);
 
   const params = UpdateScenarioParams.safeParse(req.params);
   if (!params.success) {
@@ -168,8 +163,7 @@ router.patch("/scenarios/:id", async (req, res): Promise<void> => {
 });
 
 router.delete("/scenarios/:id", async (req, res): Promise<void> => {
-  const { userId } = getAuth(req);
-  const account = await getOrCreateAccount(userId!);
+  const account = await getAccountById(req.accountId!);
 
   const params = DeleteScenarioParams.safeParse(req.params);
   if (!params.success) {

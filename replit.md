@@ -57,11 +57,21 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Setup status
 
 - Dependencies installed, DB schema pushed, demo accounts seeded via `pnpm --filter @workspace/scripts run seed`.
-- Clerk is provisioned via Replit-managed Clerk (`CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY` are set).
-- `ADMIN_PASSWORD` secret is set — admin dashboard (`/admin`) is fully operational. Password: see `scripts/src/seed-admin.ts` for the documented default.
+- **Auth: Clerk removed.** Owner login uses email-only session cookie (`POST /api/owner/login`). No password required — account must exist in DB (provisioned by admin).
+- `ADMIN_PASSWORD` secret must be set in Replit Secrets — admin dashboard (`/admin`) uses this password.
+- `SESSION_SECRET` is set (signs both owner and admin session cookies).
 - Workflows configured: `artifacts/api-server: API Server` (PORT=8080) and `artifacts/yastar: web` (PORT=22292) — both running.
-- Auth: sign-up is disabled. Only email login is shown. Accounts are provisioned by admin from `/admin`.
-- Admin can create owner accounts from the dashboard; accounts are linked to Clerk on first login by email.
+- Admin provisions owner accounts from `/admin` dashboard; owners log in at `/sign-in` with their email.
+
+## Demo accounts (seeded)
+
+| Email | Tier | Skenario |
+|---|---|---|
+| `demo.free@yastar.app` | Free | 2 maks |
+| `demo.starter@yastar.app` | Starter | 15 maks |
+| `demo.professional@yastar.app` | Professional | Unlimited |
+
+**Admin dashboard:** buka `/admin` → masukkan password dari `ADMIN_PASSWORD` secret.
 
 ## Gotchas
 

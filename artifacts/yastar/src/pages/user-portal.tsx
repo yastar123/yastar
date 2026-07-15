@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useClerk, useUser } from '@clerk/react';
 import { Redirect } from 'wouter';
 import { LogOut } from 'lucide-react';
 import { useGetMyAccount } from '@workspace/api-client-react';
+import { useOwnerAuth } from '@/lib/ownerAuth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,19 +13,21 @@ import { TIER_LABELS } from '@/lib/format';
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 export default function UserPortalPage() {
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const { session, logout } = useOwnerAuth();
   const [tab, setTab] = useState('calculator');
   const { data: account, refetch } = useGetMyAccount();
 
-  if (!user) return <Redirect to="/" />;
+  if (!session?.authenticated) return <Redirect to="/" />;
 
   const usageLabel = account
     ? account.scenarioLimit === null
       ? `${account.scenarioCount} skenario tersimpan`
       : `${account.scenarioCount} / ${account.scenarioLimit} skenario`
     : null;
-  const canSave = account ? account.scenarioLimit === null || account.scenarioCount < account.scenarioLimit : true;
+
+  const canSave = account
+    ? account.scenarioLimit === null || account.scenarioCount < account.scenarioLimit
+    : true;
 
   return (
     <div className="min-h-[100dvh] bg-background" data-testid="page-user-portal">
@@ -49,7 +51,7 @@ export default function UserPortalPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => signOut({ redirectUrl: basePath || '/' })}
+              onClick={() => logout()}
               data-testid="button-sign-out"
             >
               <LogOut className="h-4 w-4 mr-1.5" /> Keluar
